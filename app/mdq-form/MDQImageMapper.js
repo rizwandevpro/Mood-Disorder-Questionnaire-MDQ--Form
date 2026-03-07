@@ -42,23 +42,23 @@ export const POS = {
   // Format: { yes: { x, y }, no: { x, y } }
   // All YES x values are 991, all NO x values are 1088 — change per-item if needed.
   Q1: [
-    { yes: { x: 991, y: 400 }, no: { x: 1086, y: 398 } }, // [0]  item 1  — felt so good / hyper
-    { yes: { x: 991, y: 460 }, no: { x: 1086, y: 460 } }, // [1]  item 2  — irritable / fights
-    { yes: { x: 991, y: 553 }, no: { x: 1086, y: 506 } }, // [2]  item 3  — self-confident
-    { yes: { x: 991, y: 602 }, no: { x: 1086, y: 554 } }, // [3]  item 4  — less sleep
-    { yes: { x: 991, y: 650 }, no: { x: 1086, y: 601 } }, // [4]  item 5  — more talkative
-    { yes: { x: 991, y: 709 }, no: { x: 1086, y: 648 } }, // [5]  item 6  — racing thoughts
-    { yes: { x: 991, y: 770 }, no: { x: 1086, y: 709 } }, // [6]  item 7  — easily distracted
-    { yes: { x: 991, y: 820 }, no: { x: 1086, y: 769 } }, // [7]  item 8  — more energy
-    { yes: { x: 991, y: 553 }, no: { x: 1086, y: 820 } }, // [8]  item 9  — ⚠ SAME AS ITEM 3 (y=553) — likely a typo, please verify
+    { yes: { x: 991, y: 399 }, no: { x: 1086, y: 398 } }, // [0]  item 1  — felt so good / hyper
+    { yes: { x: 991, y: 461 }, no: { x: 1086, y: 460 } }, // [1]  item 2  — irritable / fights
+    { yes: { x: 991, y: 507 }, no: { x: 1086, y: 506 } }, // [2]  item 3  — self-confident
+    { yes: { x: 991, y: 551 }, no: { x: 1086, y: 554 } }, // [3]  item 4  — less sleep
+    { yes: { x: 991, y: 600 }, no: { x: 1086, y: 601 } }, // [4]  item 5  — more talkative
+    { yes: { x: 991, y: 650 }, no: { x: 1086, y: 648 } }, // [5]  item 6  — racing thoughts
+    { yes: { x: 991, y: 709 }, no: { x: 1086, y: 709 } }, // [6]  item 7  — easily distracted
+    { yes: { x: 991, y: 770 }, no: { x: 1086, y: 769 } }, // [7]  item 8  — more energy
+    { yes: { x: 991, y: 819 }, no: { x: 1086, y: 820 } }, // [8]  item 9  — ⚠ SAME AS ITEM 3 (y=553) — likely a typo, please verify
     { yes: { x: 991, y: 881 }, no: { x: 1086, y: 881 } }, // [9]  item 10 — more social
     { yes: { x: 991, y: 942 }, no: { x: 1086, y: 942 } }, // [10] item 11 — more interested in sex
     { yes: { x: 991, y: 1004 }, no: { x: 1086, y: 1004 } }, // [11] item 12 — risky/unusual behaviour
-    { yes: { x: 991, y: 1065 }, no: { x: 1086, y: 1065 } }, // [12] item 13 — spending money trouble
+    { yes: { x: 991, y: 1067 }, no: { x: 1086, y: 1065 } }, // [12] item 13 — spending money trouble
   ],
 
   // ── Q2 ────────────────────────────────────────────────────────────────────
-  Q2: { yes: { x: 991, y: 1130 }, no: { x: 1086, y: 1128 } },
+  Q2: { yes: { x: 991, y: 1124 }, no: { x: 1086, y: 1128 } },
 
   // ── Q3: 4 horizontal circles ──────────────────────────────────────────────
   // Each option has its own x. Y is shared across all four.
@@ -73,7 +73,7 @@ export const POS = {
   Q4: { yes: { x: 991, y: 1352 }, no: { x: 1086, y: 1353 } },
 
   // ── Q5 ────────────────────────────────────────────────────────────────────
-  Q5: { yes: { x: 991, y: 1430 }, no: { x: 1086, y: 1429 } },
+  Q5: { yes: { x: 991, y: 1428 }, no: { x: 1086, y: 1429 } },
 
   // ── Name & Date text ──────────────────────────────────────────────────────
   NAME_X: 235,
@@ -346,7 +346,7 @@ export default function MDQImageMapper({ answers }) {
       </div>
 
       {/* ── Position reference guide ── */}
-      <div className="mt-4 bg-amber-50 border border-amber-200 rounded-xl px-5 py-4">
+      {/* <div className="mt-4 bg-amber-50 border border-amber-200 rounded-xl px-5 py-4">
         <p
           className="text-xs font-bold text-amber-800 mb-3 uppercase tracking-wider"
           style={{ fontFamily: "'Source Sans 3', sans-serif" }}
@@ -373,7 +373,7 @@ export default function MDQImageMapper({ answers }) {
             <p key={i}><span className="text-blue-700">Q3[{i}]</span>{"  "}x={c.x} y={c.y}{"  "}← {["No problem", "Minor problem", "Moderate problem", "Serious problem"][i]}</p>
           ))}
         </div>
-      </div>
+      </div> */}
     </div>
   );
 }
