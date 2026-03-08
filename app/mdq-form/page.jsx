@@ -74,7 +74,7 @@ export default function MDQPage() {
 
             {/* Logo + name */}
             <div className="flex items-center gap-3">
-              <div className="w-9 h-9 bg-white/10 rounded-lg border border-white/20 flex items-center justify-center">
+              <div className="w-9 h-15 bg-white/10 rounded-lg border border-white/20 flex items-center justify-center">
                 <svg viewBox="0 0 36 36" width="22" height="22" fill="none">
                   <path d="M18 3C13 3 7 8 7 15c0 5 3 9 8 11v6h6v-6c5-2 8-6 8-11C29 8 23 3 18 3z" fill="#1d4ed8" />
                   <path d="M18 3C13 3 7 8 7 15c0 5 3 9 8 11" stroke="#93c5fd" strokeWidth="1.5" fill="none" strokeLinecap="round" />
@@ -82,7 +82,7 @@ export default function MDQPage() {
                 </svg>
               </div>
               <div className="hidden sm:block">
-                <p className="text-white font-bold text-xs tracking-widest uppercase leading-none" style={{ fontFamily: "'Source Sans 3', sans-serif" }}>
+                <p className="text-white font-bold text-xl tracking-widest uppercase leading-none" style={{ fontFamily: "'Source Sans 3', sans-serif" }}>
                   Cambridge Psychiatry
                 </p>
                 <p className="text-blue-300 text-[9px] tracking-widest uppercase" style={{ fontFamily: "'Source Sans 3', sans-serif" }}>

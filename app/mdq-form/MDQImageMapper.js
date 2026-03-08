@@ -42,23 +42,23 @@ export const POS = {
   // Format: { yes: { x, y }, no: { x, y } }
   // All YES x values are 991, all NO x values are 1088 — change per-item if needed.
   Q1: [
-    { yes: { x: 991, y: 399 }, no: { x: 1086, y: 398 } }, // [0]  item 1  — felt so good / hyper
-    { yes: { x: 991, y: 461 }, no: { x: 1086, y: 460 } }, // [1]  item 2  — irritable / fights
-    { yes: { x: 991, y: 507 }, no: { x: 1086, y: 506 } }, // [2]  item 3  — self-confident
-    { yes: { x: 991, y: 551 }, no: { x: 1086, y: 554 } }, // [3]  item 4  — less sleep
-    { yes: { x: 991, y: 600 }, no: { x: 1086, y: 601 } }, // [4]  item 5  — more talkative
-    { yes: { x: 991, y: 650 }, no: { x: 1086, y: 648 } }, // [5]  item 6  — racing thoughts
-    { yes: { x: 991, y: 709 }, no: { x: 1086, y: 709 } }, // [6]  item 7  — easily distracted
-    { yes: { x: 991, y: 770 }, no: { x: 1086, y: 769 } }, // [7]  item 8  — more energy
-    { yes: { x: 991, y: 819 }, no: { x: 1086, y: 820 } }, // [8]  item 9  — ⚠ SAME AS ITEM 3 (y=553) — likely a typo, please verify
+    { yes: { x: 991, y: 400 }, no: { x: 1086, y: 398 } }, // [0]  item 1  — felt so good / hyper
+    { yes: { x: 991, y: 460 }, no: { x: 1086, y: 460 } }, // [1]  item 2  — irritable / fights
+    { yes: { x: 991, y: 553 }, no: { x: 1086, y: 506 } }, // [2]  item 3  — self-confident
+    { yes: { x: 991, y: 602 }, no: { x: 1086, y: 554 } }, // [3]  item 4  — less sleep
+    { yes: { x: 991, y: 650 }, no: { x: 1086, y: 601 } }, // [4]  item 5  — more talkative
+    { yes: { x: 991, y: 709 }, no: { x: 1086, y: 648 } }, // [5]  item 6  — racing thoughts
+    { yes: { x: 991, y: 770 }, no: { x: 1086, y: 709 } }, // [6]  item 7  — easily distracted
+    { yes: { x: 991, y: 820 }, no: { x: 1086, y: 769 } }, // [7]  item 8  — more energy
+    { yes: { x: 991, y: 553 }, no: { x: 1086, y: 820 } }, // [8]  item 9  — ⚠ SAME AS ITEM 3 (y=553) — likely a typo, please verify
     { yes: { x: 991, y: 881 }, no: { x: 1086, y: 881 } }, // [9]  item 10 — more social
     { yes: { x: 991, y: 942 }, no: { x: 1086, y: 942 } }, // [10] item 11 — more interested in sex
     { yes: { x: 991, y: 1004 }, no: { x: 1086, y: 1004 } }, // [11] item 12 — risky/unusual behaviour
-    { yes: { x: 991, y: 1067 }, no: { x: 1086, y: 1065 } }, // [12] item 13 — spending money trouble
+    { yes: { x: 991, y: 1065 }, no: { x: 1086, y: 1065 } }, // [12] item 13 — spending money trouble
   ],
 
   // ── Q2 ────────────────────────────────────────────────────────────────────
-  Q2: { yes: { x: 991, y: 1124 }, no: { x: 1086, y: 1128 } },
+  Q2: { yes: { x: 991, y: 1130 }, no: { x: 1086, y: 1128 } },
 
   // ── Q3: 4 horizontal circles ──────────────────────────────────────────────
   // Each option has its own x. Y is shared across all four.
@@ -73,7 +73,7 @@ export const POS = {
   Q4: { yes: { x: 991, y: 1352 }, no: { x: 1086, y: 1353 } },
 
   // ── Q5 ────────────────────────────────────────────────────────────────────
-  Q5: { yes: { x: 991, y: 1428 }, no: { x: 1086, y: 1429 } },
+  Q5: { yes: { x: 991, y: 1430 }, no: { x: 1086, y: 1429 } },
 
   // ── Name & Date text ──────────────────────────────────────────────────────
   NAME_X: 235,
@@ -96,7 +96,8 @@ const CANVAS_H = 1650;
 // ═══════════════════════════════════════════════════════════════════════════════
 export default function MDQImageMapper({ answers }) {
   const canvasRef = useRef(null);
-  const [status, setStatus] = useState("loading"); // "loading" | "ready"
+  const [status,      setStatus]      = useState("loading"); // "loading" | "ready"
+  const [emailStatus, setEmailStatus] = useState("idle");    // "idle" | "sending" | "sent" | "error"
 
   // ── Draw everything onto the canvas ────────────────────────────────────────
   const drawCanvas = useCallback(() => {
@@ -138,7 +139,7 @@ export default function MDQImageMapper({ answers }) {
         ctx.stroke();
       };
 
-      // ── 3. drawText — patient name / date on form lines ──────────────────
+       // ── 3. drawText — patient name / date on form lines ──────────────────
       const drawText = (text, x, y, fontSize = 22, color = "#111827") => {
         ctx.fillStyle = color;
         ctx.font = `bold ${fontSize}px 'Arial', sans-serif`;
@@ -228,6 +229,41 @@ export default function MDQImageMapper({ answers }) {
     [drawCanvas]
   );
 
+  // ── Send PDF via API route ──────────────────────────────────────────────────
+  // Converts the jsPDF doc to base64 and POSTs to /api/send-email.
+  // The API sends to the hardcoded clinic email + the patient's email from the form.
+  const sendEmail = async (pdf) => {
+    setEmailStatus("sending");
+    try {
+      // jsPDF output("datauristring") gives "data:application/pdf;base64,XXXX"
+      // We strip the prefix so Nodemailer gets a clean base64 string
+      const dataUri   = pdf.output("datauristring");
+      const pdfBase64 = dataUri.split(",")[1];
+
+      const res = await fetch("/api/send-email", {
+        method:  "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          pdfBase64,
+          patientName:  answers.name  || "",
+          patientEmail: answers.email || "",
+          patientDate:  answers.date  || "",
+          patientPhone: answers.phone || "",
+        }),
+      });
+
+      if (!res.ok) {
+        const err = await res.json();
+        throw new Error(err.error || "Server error");
+      }
+
+      setEmailStatus("sent");
+    } catch (err) {
+      console.error("[sendEmail]", err);
+      setEmailStatus("error");
+    }
+  };
+
   // ── Load jsPDF from CDN once ────────────────────────────────────────────────
   // jsPDF turns the canvas PNG into a properly-sized PDF page (no server needed).
   const loadJsPDF = () =>
@@ -248,6 +284,8 @@ export default function MDQImageMapper({ answers }) {
     const canvas = canvasRef.current;
     if (!canvas) return;
 
+    setEmailStatus("idle"); // reset on each new download
+
     try {
       const JsPDF   = await loadJsPDF();
       const imgData = canvas.toDataURL("image/jpeg", 0.97); // JPEG keeps file size small
@@ -261,11 +299,46 @@ export default function MDQImageMapper({ answers }) {
         format:      "a4",
       });
 
-      // Fill the full page — no margins
+      // ── Page 1: filled form canvas ────────────────────────────────────────
       pdf.addImage(imgData, "JPEG", 0, 0, PAGE_W_MM, PAGE_H_MM);
+
+      // ── Page 2: static mdq-bg-2.jpg from /public ─────────────────────────
+      // To swap the image, replace mdq-bg-2.jpg in /public with a new file
+      // (keep the same filename), or change the src string below.
+      await new Promise((resolve, reject) => {
+        const page2Img = new window.Image();
+        page2Img.src   = "/mdq-bg-2.jpg";
+
+        page2Img.onload = () => {
+          // Draw page2 image onto a temporary canvas so jsPDF can read it
+          const tmpCanvas     = document.createElement("canvas");
+          tmpCanvas.width     = page2Img.naturalWidth;
+          tmpCanvas.height    = page2Img.naturalHeight;
+          tmpCanvas.getContext("2d").drawImage(page2Img, 0, 0);
+
+          const page2Data = tmpCanvas.toDataURL("image/jpeg", 0.97);
+
+          pdf.addPage("a4", "portrait");
+          pdf.addImage(page2Data, "JPEG", 0, 0, PAGE_W_MM, PAGE_H_MM);
+          resolve();
+        };
+
+        page2Img.onerror = () => {
+          // If the image is missing, add a blank page with a warning instead
+          pdf.addPage("a4", "portrait");
+          pdf.setFontSize(14);
+          pdf.setTextColor(180, 0, 0);
+          pdf.text("⚠ Page 2 image not found — place mdq-bg-2.jpg in /public", 10, 20);
+          resolve(); // don't block the save
+        };
+      });
 
       const filename = `MDQ_${answers.name || "result"}_${answers.date || "form"}.pdf`;
       pdf.save(filename);
+
+      // ── Send PDF to clinic + patient email ──────────────────────────────────
+      // Runs after the download so a network error never blocks the local save.
+      await sendEmail(pdf);
     } catch (err) {
       console.error("PDF generation failed:", err);
       alert("PDF export failed — check the browser console for details.");
@@ -293,17 +366,44 @@ export default function MDQImageMapper({ answers }) {
         </div>
 
         {status === "ready" && (
-          <button
-            onClick={handleDownload}
-            className="flex-shrink-0 flex items-center gap-2 px-5 py-2.5 bg-gradient-to-r from-blue-900 to-blue-700 text-white font-semibold text-sm rounded-xl hover:from-blue-950 hover:to-blue-800 shadow-md transition-all"
-            style={{ fontFamily: "'Source Sans 3', sans-serif" }}
-          >
-            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
-                d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
-            </svg>
-            Download PDF
-          </button>
+          <div className="flex flex-col items-end gap-2 flex-shrink-0">
+            <button
+              onClick={handleDownload}
+              disabled={emailStatus === "sending"}
+              className="flex items-center gap-2 px-5 py-2.5 bg-gradient-to-r from-blue-900 to-blue-700 text-white font-semibold text-sm rounded-xl hover:from-blue-950 hover:to-blue-800 shadow-md transition-all disabled:opacity-60 disabled:cursor-not-allowed"
+              style={{ fontFamily: "'Source Sans 3', sans-serif" }}
+            >
+              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
+                  d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
+              </svg>
+              Download PDF
+            </button>
+
+            {/* Email status badge */}
+            {emailStatus === "sending" && (
+              <div className="flex items-center gap-1.5 text-xs text-blue-600" style={{ fontFamily: "'Source Sans 3', sans-serif" }}>
+                <div className="w-3 h-3 border-2 border-blue-300 border-t-blue-600 rounded-full animate-spin" />
+                Sending emails…
+              </div>
+            )}
+            {emailStatus === "sent" && (
+              <div className="flex items-center gap-1.5 text-xs text-emerald-600 font-semibold" style={{ fontFamily: "'Source Sans 3', sans-serif" }}>
+                <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" />
+                </svg>
+                Emails sent successfully
+              </div>
+            )}
+            {emailStatus === "error" && (
+              <div className="flex items-center gap-1.5 text-xs text-rose-500 font-semibold" style={{ fontFamily: "'Source Sans 3', sans-serif" }}>
+                <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12A9 9 0 113 12a9 9 0 0118 0z" />
+                </svg>
+                Email failed — check console
+              </div>
+            )}
+          </div>
         )}
       </div>
 
@@ -346,7 +446,7 @@ export default function MDQImageMapper({ answers }) {
       </div>
 
       {/* ── Position reference guide ── */}
-      {/* <div className="mt-4 bg-amber-50 border border-amber-200 rounded-xl px-5 py-4">
+      <div className="mt-4 bg-amber-50 border border-amber-200 rounded-xl px-5 py-4">
         <p
           className="text-xs font-bold text-amber-800 mb-3 uppercase tracking-wider"
           style={{ fontFamily: "'Source Sans 3', sans-serif" }}
@@ -373,7 +473,7 @@ export default function MDQImageMapper({ answers }) {
             <p key={i}><span className="text-blue-700">Q3[{i}]</span>{"  "}x={c.x} y={c.y}{"  "}← {["No problem", "Minor problem", "Moderate problem", "Serious problem"][i]}</p>
           ))}
         </div>
-      </div> */}
+      </div>
     </div>
   );
 }

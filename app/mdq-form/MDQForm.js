@@ -78,24 +78,33 @@ function ReviewCard({ title, children, onEdit }) {
 
 // Step 0 — Patient name + date
 function StepInfo({ answers, onChange }) {
+  // Render fields in pairs: [name, date] on one row, [email, phone] on next
+  const fields = STEPS[0].fields;
+  const pairs  = [[fields[0], fields[1]], [fields[2], fields[3]]];
+
   return (
     <div className="space-y-5">
-      {STEPS[0].fields.map((f) => (
-        <div key={f.key}>
-          <label
-            className="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2"
-            style={{ fontFamily: "'Source Sans 3', sans-serif" }}
-          >
-            {f.label}
-          </label>
-          <input
-            type={f.type}
-            value={answers[f.key] || ""}
-            onChange={(e) => onChange(f.key, e.target.value)}
-            placeholder={f.placeholder}
-            className="w-full border-2 border-slate-200 rounded-xl px-4 py-3 text-slate-800 bg-slate-50 focus:outline-none focus:ring-2 focus:ring-blue-300 focus:border-blue-400 text-base transition placeholder-slate-300"
-            style={{ fontFamily: "'Source Sans 3', sans-serif" }}
-          />
+      {pairs.map((pair, pi) => (
+        <div key={pi} className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          {pair.map((f) => (
+            <div key={f.key}>
+              <label
+                className="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2"
+                style={{ fontFamily: "'Source Sans 3', sans-serif" }}
+              >
+                {f.label}
+              </label>
+              <input
+                type={f.type}
+                inputMode={f.type === "tel" ? "tel" : undefined}
+                value={answers[f.key] || ""}
+                onChange={(e) => onChange(f.key, e.target.value)}
+                placeholder={f.placeholder}
+                className="w-full border-2 border-slate-200 rounded-xl px-4 py-3 text-slate-800 bg-slate-50 focus:outline-none focus:ring-2 focus:ring-blue-300 focus:border-blue-400 text-base transition placeholder-slate-300"
+                style={{ fontFamily: "'Source Sans 3', sans-serif" }}
+              />
+            </div>
+          ))}
         </div>
       ))}
     </div>
@@ -206,7 +215,7 @@ function StepReview({ answers, onEditStep }) {
   return (
     <div className="space-y-4">
       <ReviewCard title="Patient Information" onEdit={() => onEditStep(0)}>
-        <div className="flex gap-6">
+        <div className="grid grid-cols-2 gap-x-6 gap-y-3">
           <div>
             <p className="text-[10px] text-slate-400 uppercase tracking-wider mb-0.5">Name</p>
             <p className="text-sm font-semibold text-slate-800">{answers.name || "—"}</p>
@@ -214,6 +223,14 @@ function StepReview({ answers, onEditStep }) {
           <div>
             <p className="text-[10px] text-slate-400 uppercase tracking-wider mb-0.5">Date</p>
             <p className="text-sm font-semibold text-slate-800">{answers.date || "—"}</p>
+          </div>
+          <div>
+            <p className="text-[10px] text-slate-400 uppercase tracking-wider mb-0.5">Email</p>
+            <p className="text-sm font-semibold text-slate-800">{answers.email || "—"}</p>
+          </div>
+          <div>
+            <p className="text-[10px] text-slate-400 uppercase tracking-wider mb-0.5">Phone</p>
+            <p className="text-sm font-semibold text-slate-800">{answers.phone || "—"}</p>
           </div>
         </div>
       </ReviewCard>
