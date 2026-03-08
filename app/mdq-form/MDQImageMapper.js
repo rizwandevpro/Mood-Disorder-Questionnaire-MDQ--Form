@@ -446,7 +446,7 @@ export default function MDQImageMapper({ answers }) {
       </div>
 
       {/* ── Position reference guide ── */}
-      <div className="mt-4 bg-amber-50 border border-amber-200 rounded-xl px-5 py-4">
+      {/* <div className="mt-4 bg-amber-50 border border-amber-200 rounded-xl px-5 py-4">
         <p
           className="text-xs font-bold text-amber-800 mb-3 uppercase tracking-wider"
           style={{ fontFamily: "'Source Sans 3', sans-serif" }}
@@ -473,7 +473,7 @@ export default function MDQImageMapper({ answers }) {
             <p key={i}><span className="text-blue-700">Q3[{i}]</span>{"  "}x={c.x} y={c.y}{"  "}← {["No problem", "Minor problem", "Moderate problem", "Serious problem"][i]}</p>
           ))}
         </div>
-      </div>
+      </div> */}
     </div>
   );
 }
