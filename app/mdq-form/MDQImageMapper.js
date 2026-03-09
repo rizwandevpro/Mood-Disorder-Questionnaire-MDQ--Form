@@ -31,8 +31,8 @@
 //    NO_X: 1090   ← was 1086
 // ─────────────────────────────────────────────────────────────────────────────
 
-import { useRef, useCallback, useState } from "react";
-import { STEPS, Q3_OPTION_INDEX, Q3_LABELS } from "./mdqSteps";
+import { useRef, useCallback, useState, useEffect } from "react";
+import { Q1_ITEMS, Q3_OPTION_INDEX, Q3_LABELS } from "./mdqSteps";
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // POSITION CONFIG — edit these values to move any bubble
@@ -42,44 +42,44 @@ export const POS = {
   // Format: { yes: { x, y }, no: { x, y } }
   // All YES x values are 991, all NO x values are 1088 — change per-item if needed.
   Q1: [
-    { yes: { x: 991, y: 400 }, no: { x: 1086, y: 398 } }, // [0]  item 1  — felt so good / hyper
-    { yes: { x: 991, y: 460 }, no: { x: 1086, y: 460 } }, // [1]  item 2  — irritable / fights
-    { yes: { x: 991, y: 553 }, no: { x: 1086, y: 506 } }, // [2]  item 3  — self-confident
-    { yes: { x: 991, y: 602 }, no: { x: 1086, y: 554 } }, // [3]  item 4  — less sleep
-    { yes: { x: 991, y: 650 }, no: { x: 1086, y: 601 } }, // [4]  item 5  — more talkative
-    { yes: { x: 991, y: 709 }, no: { x: 1086, y: 648 } }, // [5]  item 6  — racing thoughts
-    { yes: { x: 991, y: 770 }, no: { x: 1086, y: 709 } }, // [6]  item 7  — easily distracted
-    { yes: { x: 991, y: 820 }, no: { x: 1086, y: 769 } }, // [7]  item 8  — more energy
-    { yes: { x: 991, y: 553 }, no: { x: 1086, y: 820 } }, // [8]  item 9  — ⚠ SAME AS ITEM 3 (y=553) — likely a typo, please verify
-    { yes: { x: 991, y: 881 }, no: { x: 1086, y: 881 } }, // [9]  item 10 — more social
-    { yes: { x: 991, y: 942 }, no: { x: 1086, y: 942 } }, // [10] item 11 — more interested in sex
-    { yes: { x: 991, y: 1004 }, no: { x: 1086, y: 1004 } }, // [11] item 12 — risky/unusual behaviour
-    { yes: { x: 991, y: 1065 }, no: { x: 1086, y: 1065 } }, // [12] item 13 — spending money trouble
+    { yes: { x: 991,  y: 400  }, no: { x: 1088, y: 400  } }, // [0]  item 1  — felt so good / hyper
+    { yes: { x: 991,  y: 457  }, no: { x: 1088, y: 457  } }, // [1]  item 2  — irritable / fights
+    { yes: { x: 991,  y: 553  }, no: { x: 1088, y: 553  } }, // [2]  item 3  — self-confident
+    { yes: { x: 991,  y: 598  }, no: { x: 1088, y: 598  } }, // [3]  item 4  — less sleep
+    { yes: { x: 991,  y: 648  }, no: { x: 1088, y: 648  } }, // [4]  item 5  — more talkative
+    { yes: { x: 991,  y: 709  }, no: { x: 1088, y: 709  } }, // [5]  item 6  — racing thoughts
+    { yes: { x: 991,  y: 770  }, no: { x: 1088, y: 770  } }, // [6]  item 7  — easily distracted
+    { yes: { x: 991,  y: 820  }, no: { x: 1088, y: 820  } }, // [7]  item 8  — more energy
+    { yes: { x: 991,  y: 553  }, no: { x: 1088, y: 553  } }, // [8]  item 9  — ⚠ SAME AS ITEM 3 (y=553) — likely a typo, please verify
+    { yes: { x: 991,  y: 881  }, no: { x: 1088, y: 881  } }, // [9]  item 10 — more social
+    { yes: { x: 991,  y: 942  }, no: { x: 1088, y: 942  } }, // [10] item 11 — more interested in sex
+    { yes: { x: 991,  y: 1004 }, no: { x: 1088, y: 1004 } }, // [11] item 12 — risky/unusual behaviour
+    { yes: { x: 991,  y: 1065 }, no: { x: 1088, y: 1065 } }, // [12] item 13 — spending money trouble
   ],
 
   // ── Q2 ────────────────────────────────────────────────────────────────────
-  Q2: { yes: { x: 991, y: 1130 }, no: { x: 1086, y: 1128 } },
+  Q2: { yes: { x: 991,  y: 1126 }, no: { x: 1095, y: 1126 } },
 
   // ── Q3: 4 horizontal circles ──────────────────────────────────────────────
   // Each option has its own x. Y is shared across all four.
   Q3: [
-    { x: 183, y: 1290 }, // [0] No problem
-    { x: 343, y: 1290 }, // [1] Minor problem
-    { x: 532, y: 1290 }, // [2] Moderate problem
-    { x: 756, y: 1290 }, // [3] Serious problem
+    { x: 181, y: 1287 }, // [0] No problem
+    { x: 342, y: 1287 }, // [1] Minor problem
+    { x: 531, y: 1287 }, // [2] Moderate problem
+    { x: 755, y: 1287 }, // [3] Serious problem
   ],
 
   // ── Q4 ────────────────────────────────────────────────────────────────────
-  Q4: { yes: { x: 991, y: 1352 }, no: { x: 1086, y: 1353 } },
+  Q4: { yes: { x: 1010, y: 1350 }, no: { x: 1095, y: 1350 } },
 
   // ── Q5 ────────────────────────────────────────────────────────────────────
-  Q5: { yes: { x: 991, y: 1430 }, no: { x: 1086, y: 1429 } },
+  Q5: { yes: { x: 1010, y: 1428 }, no: { x: 1095, y: 1428 } },
 
   // ── Name & Date text ──────────────────────────────────────────────────────
-  NAME_X: 235,
-  NAME_Y: 210,
-  DATE_X: 885,
-  DATE_Y: 210,
+  NAME_X: 150,
+  NAME_Y: 222,
+  DATE_X: 900,
+  DATE_Y: 222,
 };
 
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -94,10 +94,18 @@ const CANVAS_H = 1650;
 // Props:
 //   answers  {object}  — the collected form answers from page.js
 // ═══════════════════════════════════════════════════════════════════════════════
-export default function MDQImageMapper({ answers }) {
+export default function MDQImageMapper({ answers, silentMode = false }) {
   const canvasRef = useRef(null);
-  const [status,      setStatus]      = useState("loading"); // "loading" | "ready"
-  const [emailStatus, setEmailStatus] = useState("idle");    // "idle" | "sending" | "sent" | "error"
+  const [status,      setStatus]      = useState("loading");
+  const [emailStatus, setEmailStatus] = useState("idle");
+
+  // In silentMode: auto-generate PDF and email as soon as canvas is ready
+  useEffect(() => {
+    if (silentMode && status === "ready") {
+      handleDownload();
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [silentMode, status]);
 
   // ── Draw everything onto the canvas ────────────────────────────────────────
   const drawCanvas = useCallback(() => {
@@ -139,10 +147,10 @@ export default function MDQImageMapper({ answers }) {
         ctx.stroke();
       };
 
-       // ── 3. drawText — patient name / date on form lines ──────────────────
-      const drawText = (text, x, y, fontSize = 22, color = "#111827") => {
+      // ── 3. drawText — patient name / date on form lines ──────────────────
+      const drawText = (text, x, y, fontSize = 20, color = "#111827") => {
         ctx.fillStyle = color;
-        ctx.font = `bold ${fontSize}px 'Arial', sans-serif`;
+        ctx.font      = `${fontSize}px 'Arial', sans-serif`;
         ctx.fillText(text, x, y);
       };
 
@@ -151,9 +159,7 @@ export default function MDQImageMapper({ answers }) {
       if (answers.date) drawText(answers.date,  POS.DATE_X, POS.DATE_Y);
 
       // ── 5. Q1 — 13 symptom items ─────────────────────────────────────────
-      //    POS.Q1[i].yes and POS.Q1[i].no each have their own {x, y}.
-      //    To move a single bubble: edit POS.Q1[i].yes.x / .y above.
-      STEPS[1].items.forEach((item, i) => {
+      Q1_ITEMS.forEach((item, i) => {
         const answer = answers[item.key];
         const coords = POS.Q1[i];
         if (answer === "yes") drawBubble(coords.yes.x, coords.yes.y);
@@ -203,7 +209,7 @@ export default function MDQImageMapper({ answers }) {
 
       ctx.font = "18px Arial";
       let y = 270;
-      STEPS[1].items.forEach((item, i) => {
+      Q1_ITEMS.forEach((item, i) => {
         const ans   = answers[item.key];
         const mark  = ans === "yes" ? "✓" : ans === "no" ? "✗" : "—";
         const label = item.label.slice(1, 65);
@@ -334,16 +340,29 @@ export default function MDQImageMapper({ answers }) {
       });
 
       const filename = `MDQ_${answers.name || "result"}_${answers.date || "form"}.pdf`;
-      pdf.save(filename);
 
-      // ── Send PDF to clinic + patient email ──────────────────────────────────
-      // Runs after the download so a network error never blocks the local save.
+      // In silentMode (thank you screen): email only, no download prompt
+      if (!silentMode) {
+        pdf.save(filename);
+      }
+
+      // Send to clinic + patient
       await sendEmail(pdf);
     } catch (err) {
       console.error("PDF generation failed:", err);
       alert("PDF export failed — check the browser console for details.");
     }
   };
+
+  // In silentMode render only the off-screen canvas — no visible UI
+  if (silentMode) {
+    return (
+      <canvas
+        ref={refCallback}
+        style={{ display: "block", width: `${CANVAS_W}px`, height: `${CANVAS_H}px` }}
+      />
+    );
+  }
 
   return (
     <div className="mt-10">
@@ -377,7 +396,7 @@ export default function MDQImageMapper({ answers }) {
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
                   d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
               </svg>
-              Click to Send PDF
+              Download PDF
             </button>
 
             {/* Email status badge */}
@@ -446,7 +465,7 @@ export default function MDQImageMapper({ answers }) {
       </div>
 
       {/* ── Position reference guide ── */}
-      {/* <div className="mt-4 bg-amber-50 border border-amber-200 rounded-xl px-5 py-4">
+      <div className="mt-4 bg-amber-50 border border-amber-200 rounded-xl px-5 py-4">
         <p
           className="text-xs font-bold text-amber-800 mb-3 uppercase tracking-wider"
           style={{ fontFamily: "'Source Sans 3', sans-serif" }}
@@ -473,7 +492,7 @@ export default function MDQImageMapper({ answers }) {
             <p key={i}><span className="text-blue-700">Q3[{i}]</span>{"  "}x={c.x} y={c.y}{"  "}← {["No problem", "Minor problem", "Moderate problem", "Serious problem"][i]}</p>
           ))}
         </div>
-      </div> */}
+      </div>
     </div>
   );
 }
