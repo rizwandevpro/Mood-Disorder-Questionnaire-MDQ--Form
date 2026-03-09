@@ -13,6 +13,7 @@ import { useState } from "react";
 import { STEPS, TOTAL_STEPS, THANKYOU_STEP } from "./mdqSteps";
 import MDQForm        from "./MDQForm";
 import MDQImageMapper from "./MDQImageMapper";
+import Image from "next/image";
 
 export default function MDQPage() {
   const [currentStep, setCurrentStep] = useState(0);
@@ -56,29 +57,26 @@ export default function MDQPage() {
       <div className="min-h-screen bg-gradient-to-br from-sky-50 via-white to-blue-50">
 
         {/* ── Sticky top bar ── */}
-        <div className="bg-gradient-to-r from-blue-950 to-blue-800 px-4 py-4 sticky top-0 z-40 shadow-md">
+        <div className="bg-[#7d4f50] px-4 py-4 sticky top-0 z-40 shadow-md">
           <div className="max-w-2xl mx-auto flex items-center justify-between gap-4">
 
             <div className="flex items-center gap-3">
-              <div className="w-9 h-9 bg-white/10 rounded-lg border border-white/20 flex items-center justify-center">
-                <svg viewBox="0 0 36 36" width="22" height="22" fill="none">
-                  <path d="M18 3C13 3 7 8 7 15c0 5 3 9 8 11v6h6v-6c5-2 8-6 8-11C29 8 23 3 18 3z" fill="#1d4ed8" />
-                  <path d="M18 3C13 3 7 8 7 15c0 5 3 9 8 11" stroke="#93c5fd" strokeWidth="1.5" fill="none" strokeLinecap="round" />
-                  <circle cx="18" cy="15" r="2.5" fill="#60a5fa" />
-                </svg>
+              <div className="w-12 h-12 bg-white rounded-lg border border-white/20 flex items-center justify-center p-1">
+                <Image src="/logo2.png" alt="Cambridge Psychiatry Logo" width={100} height={50} />
               </div>
               <div className="hidden sm:block">
+                
                 <p className="text-white font-bold text-2xl tracking-widest uppercase leading-none" style={{ fontFamily: "'Source Sans 3', sans-serif" }}>
                   Cambridge Psychiatry
                 </p>
-                <p className="text-blue-300 text-[16px] tracking-widest uppercase" style={{ fontFamily: "'Source Sans 3', sans-serif" }}>
+                <p className="text-white/80 text-[16px] tracking-widest uppercase" style={{ fontFamily: "'Source Sans 3', sans-serif" }}>
                   Mood Disorder Questionnaire (MDQ)
                 </p>
               </div>
               <p className="sm:hidden text-white font-bold text-xs tracking-widest uppercase" style={{ fontFamily: "'Source Sans 3', sans-serif" }}>MDQ</p>
             </div>
 
-            <p className="text-blue-200 text-[10px] uppercase tracking-widest flex-shrink-0" style={{ fontFamily: "'Source Sans 3', sans-serif" }}>
+            <p className="text-white/80 text-[14px] uppercase tracking-widest flex-shrink-0" style={{ fontFamily: "'Source Sans 3', sans-serif" }}>
               {onThankYou ? "Complete" : `Step ${currentStep + 1} of ${THANKYOU_STEP}`}
             </p>
           </div>
@@ -125,8 +123,8 @@ export default function MDQPage() {
             <div className="flex flex-col items-center text-center py-12 px-4">
 
               {/* Check icon */}
-              <div className="w-20 h-20 rounded-full bg-emerald-100 flex items-center justify-center mb-6 shadow-lg shadow-emerald-100">
-                <svg className="w-10 h-10 text-emerald-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <div className="w-20 h-20 rounded-full bg-[#7d4f50] flex items-center justify-center mb-6 shadow-lg shadow-emerald-100">
+                <svg className="w-10 h-10 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" />
                 </svg>
               </div>

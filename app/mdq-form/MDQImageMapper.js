@@ -42,44 +42,44 @@ export const POS = {
   // Format: { yes: { x, y }, no: { x, y } }
   // All YES x values are 991, all NO x values are 1088 — change per-item if needed.
   Q1: [
-    { yes: { x: 991,  y: 400  }, no: { x: 1088, y: 400  } }, // [0]  item 1  — felt so good / hyper
-    { yes: { x: 991,  y: 457  }, no: { x: 1088, y: 457  } }, // [1]  item 2  — irritable / fights
-    { yes: { x: 991,  y: 553  }, no: { x: 1088, y: 553  } }, // [2]  item 3  — self-confident
-    { yes: { x: 991,  y: 598  }, no: { x: 1088, y: 598  } }, // [3]  item 4  — less sleep
-    { yes: { x: 991,  y: 648  }, no: { x: 1088, y: 648  } }, // [4]  item 5  — more talkative
-    { yes: { x: 991,  y: 709  }, no: { x: 1088, y: 709  } }, // [5]  item 6  — racing thoughts
-    { yes: { x: 991,  y: 770  }, no: { x: 1088, y: 770  } }, // [6]  item 7  — easily distracted
-    { yes: { x: 991,  y: 820  }, no: { x: 1088, y: 820  } }, // [7]  item 8  — more energy
-    { yes: { x: 991,  y: 553  }, no: { x: 1088, y: 553  } }, // [8]  item 9  — ⚠ SAME AS ITEM 3 (y=553) — likely a typo, please verify
-    { yes: { x: 991,  y: 881  }, no: { x: 1088, y: 881  } }, // [9]  item 10 — more social
-    { yes: { x: 991,  y: 942  }, no: { x: 1088, y: 942  } }, // [10] item 11 — more interested in sex
-    { yes: { x: 991,  y: 1004 }, no: { x: 1088, y: 1004 } }, // [11] item 12 — risky/unusual behaviour
-    { yes: { x: 991,  y: 1065 }, no: { x: 1088, y: 1065 } }, // [12] item 13 — spending money trouble
+    { yes: { x: 991, y: 399 }, no: { x: 1086, y: 399 } }, // [0]  item 1  — felt so good / hyper
+    { yes: { x: 991, y: 461 }, no: { x: 1086, y: 461 } }, // [1]  item 2  — irritable / fights
+    { yes: { x: 991, y: 507 }, no: { x: 1086, y: 507 } }, // [2]  item 3  — self-confident
+    { yes: { x: 991, y: 554 }, no: { x: 1086, y: 554 } }, // [3]  item 4  — less sleep
+    { yes: { x: 991, y: 601 }, no: { x: 1086, y: 601 } }, // [4]  item 5  — more talkative
+    { yes: { x: 991, y: 648 }, no: { x: 1086, y: 648 } }, // [5]  item 6  — racing thoughts
+    { yes: { x: 991, y: 709 }, no: { x: 1086, y: 709 } }, // [6]  item 7  — easily distracted
+    { yes: { x: 991, y: 769 }, no: { x: 1086, y: 769 } }, // [7]  item 8  — more energy
+    { yes: { x: 991, y: 820 }, no: { x: 1086, y: 820 } }, // [8]  item 9  — more active
+    { yes: { x: 991, y: 881 }, no: { x: 1086, y: 881 } }, // [9]  item 10 — more social
+    { yes: { x: 991, y: 942 }, no: { x: 1086, y: 942 } }, // [10] item 11 — more interested in sex
+    { yes: { x: 991, y: 1004 }, no: { x: 1086, y: 1004 } }, // [11] item 12 — risky/unusual behaviour
+    { yes: { x: 991, y: 1065 }, no: { x: 1086, y: 1065 } }, // [12] item 13 — spending money trouble
   ],
 
   // ── Q2 ────────────────────────────────────────────────────────────────────
-  Q2: { yes: { x: 991,  y: 1126 }, no: { x: 1095, y: 1126 } },
+  Q2: { yes: { x: 991, y: 1130 }, no: { x: 1086, y: 1128 } },
 
   // ── Q3: 4 horizontal circles ──────────────────────────────────────────────
   // Each option has its own x. Y is shared across all four.
   Q3: [
-    { x: 181, y: 1287 }, // [0] No problem
-    { x: 342, y: 1287 }, // [1] Minor problem
-    { x: 531, y: 1287 }, // [2] Moderate problem
-    { x: 755, y: 1287 }, // [3] Serious problem
+    { x: 183, y: 1290 }, // [0] No problem
+    { x: 343, y: 1290 }, // [1] Minor problem
+    { x: 532, y: 1290 }, // [2] Moderate problem
+    { x: 756, y: 1290 }, // [3] Serious problem
   ],
 
   // ── Q4 ────────────────────────────────────────────────────────────────────
-  Q4: { yes: { x: 1010, y: 1350 }, no: { x: 1095, y: 1350 } },
+  Q4: { yes: { x: 991, y: 1352 }, no: { x: 1086, y: 1353 } },
 
   // ── Q5 ────────────────────────────────────────────────────────────────────
-  Q5: { yes: { x: 1010, y: 1428 }, no: { x: 1095, y: 1428 } },
+  Q5: { yes: { x: 991, y: 1430 }, no: { x: 1086, y: 1429 } },
 
   // ── Name & Date text ──────────────────────────────────────────────────────
-  NAME_X: 150,
-  NAME_Y: 222,
-  DATE_X: 900,
-  DATE_Y: 222,
+  NAME_X: 235,
+  NAME_Y: 210,
+  DATE_X: 885,
+  DATE_Y: 210,
 };
 
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -147,10 +147,10 @@ export default function MDQImageMapper({ answers, silentMode = false }) {
         ctx.stroke();
       };
 
-      // ── 3. drawText — patient name / date on form lines ──────────────────
-      const drawText = (text, x, y, fontSize = 20, color = "#111827") => {
+       // ── 3. drawText — patient name / date on form lines ──────────────────
+      const drawText = (text, x, y, fontSize = 22, color = "#111827") => {
         ctx.fillStyle = color;
-        ctx.font      = `${fontSize}px 'Arial', sans-serif`;
+        ctx.font = `bold ${fontSize}px 'Arial', sans-serif`;
         ctx.fillText(text, x, y);
       };
 

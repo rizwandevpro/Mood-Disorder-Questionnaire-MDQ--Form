@@ -285,7 +285,7 @@ function CardContent({ step, answers, onChange, onAnswer, onNext, onBack, isFirs
           <button
             type="button"
             onClick={onNext}
-            className="flex items-center gap-2 px-7 py-3 rounded-xl font-semibold text-sm bg-gradient-to-r from-blue-800 to-blue-600 hover:from-blue-900 hover:to-blue-700 text-white shadow-md shadow-blue-200 transition-all focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+            className="flex items-center gap-2 px-7 py-3 rounded-sm font-semibold text-sm bg-[#7d4f50] text-white shadow-md shadow-blue-200 transition-all focus:outline-none focus:ring-2 focus:ring-offset-2"
             style={{ fontFamily: "'Source Sans 3', sans-serif" }}
           >
             Next
