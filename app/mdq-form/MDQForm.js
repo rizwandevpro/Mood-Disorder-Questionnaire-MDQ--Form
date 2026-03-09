@@ -44,7 +44,6 @@ const ANIMATION_STYLES = `
     from { opacity: 1; transform: translateX(0)   scale(1);    }
     to   { opacity: 0; transform: translateX(60px) scale(0.97); }
   }
-
   .card-enter-right {
     animation: slideInRight 0.38s cubic-bezier(0.22, 1, 0.36, 1) forwards;
   }
@@ -131,32 +130,68 @@ function YesNoBtn({ value, selected, onClick }) {
 // STEP SCREENS
 // ═══════════════════════════════════════════════════════════════════════════════
 
-function StepInfo({ step, answers, onChange }) {
+// Validation rules — required fields + per-field validators
+const FIELD_RULES = {
+  name:  { required: true,  validator: (v) => v.trim().length < 2 ? "Please enter your full name" : null },
+  date:  { required: true,  validator: (v) => !v ? "Please select a date" : null },
+  email: { required: false, validator: (v) => {
+    if (!v || !v.trim()) return null;
+    return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v.trim()) ? null : "Please enter a valid email address";
+  }},
+  phone: { required: true,  validator: (v) => {
+    const digits = v.replace(/[\s\-().+]/g, "");
+    if (!digits) return "Please enter your phone number";
+    if (!/^\d+$/.test(digits)) return "Phone number must contain only digits";
+    if (digits.length < 7 || digits.length > 15) return "Please enter a valid phone number (7–15 digits)";
+    return null;
+  }},
+};
+
+function StepInfo({ step, answers, onChange, errors }) {
   const fields = step.fields;
   const pairs  = [[fields[0], fields[1]], [fields[2], fields[3]]];
   return (
     <div className="space-y-5">
       {pairs.map((pair, pi) => (
         <div key={pi} className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          {pair.map((f) => (
-            <div key={f.key}>
-              <label
-                className="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2"
-                style={{ fontFamily: "'Source Sans 3', sans-serif" }}
-              >
-                {f.label}
-              </label>
-              <input
-                type={f.type}
-                inputMode={f.type === "tel" ? "tel" : undefined}
-                value={answers[f.key] || ""}
-                onChange={(e) => onChange(f.key, e.target.value)}
-                placeholder={f.placeholder}
-                className="w-full border-2 border-slate-200 rounded-xl px-4 py-3 text-slate-800 bg-slate-50 focus:outline-none focus:ring-2 focus:ring-blue-300 focus:border-blue-400 text-base transition placeholder-slate-300"
-                style={{ fontFamily: "'Source Sans 3', sans-serif" }}
-              />
-            </div>
-          ))}
+          {pair.map((f) => {
+            const err      = errors?.[f.key];
+            const required = FIELD_RULES[f.key]?.required;
+            return (
+              <div key={f.key}>
+                <label
+                  className="block text-[10px] font-bold uppercase tracking-widest mb-2"
+                  style={{ color: err ? "#dc2626" : "#94a3b8", fontFamily: "'Source Sans 3', sans-serif" }}
+                >
+                  {f.label}
+                  {required && <span style={{ color: "#7d4f50" }}> *</span>}
+                  {!required && <span className="normal-case tracking-normal font-normal text-slate-400"> (optional)</span>}
+                </label>
+                <input
+                  type={f.type}
+                  inputMode={f.type === "tel" ? "numeric" : undefined}
+                  value={answers[f.key] || ""}
+                  onChange={(e) => onChange(f.key, e.target.value)}
+                  placeholder={f.placeholder}
+                  className="w-full border-2 rounded-xl px-4 py-3 text-slate-800 bg-slate-50 focus:outline-none focus:ring-2 focus:ring-blue-300 text-base transition placeholder-slate-300"
+                  style={{
+                    fontFamily: "'Source Sans 3', sans-serif",
+                    borderColor: err ? "#dc2626" : "#e2e8f0",
+                  }}
+                  onFocus={e => e.target.style.borderColor = err ? "#dc2626" : "#3b82f6"}
+                  onBlur={e  => e.target.style.borderColor = err ? "#dc2626" : "#e2e8f0"}
+                />
+                {err && (
+                  <p className="mt-1.5 text-xs text-red-500 flex items-center gap-1" style={{ fontFamily: "'Source Sans 3', sans-serif" }}>
+                    <svg className="w-3 h-3 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                      <path fillRule="evenodd" d="M18 10A8 8 0 11 2 10a8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
+                    </svg>
+                    {err}
+                  </p>
+                )}
+              </div>
+            );
+          })}
         </div>
       ))}
     </div>
@@ -237,6 +272,34 @@ function StepChoice4({ step, answers, onAnswer }) {
 // CARD CONTENT — renders the right step screen inside the white card
 // ═══════════════════════════════════════════════════════════════════════════════
 function CardContent({ step, answers, onChange, onAnswer, onNext, onBack, isFirst }) {
+  const [errors, setErrors] = useState({});
+
+  const validateInfo = () => {
+    const newErrors = {};
+    step.fields?.forEach((f) => {
+      const rule = FIELD_RULES[f.key];
+      if (!rule) return;
+      const err = rule.validator(answers[f.key] || "");
+      if (err) newErrors[f.key] = err;
+    });
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
+
+  const handleNext = () => {
+    if (step.type === "info" && !validateInfo()) return;
+    onNext();
+  };
+
+  // Clear individual field error as user types
+  const handleChange = (key, value) => {
+    onChange(key, value);
+    if (errors[key]) {
+      const err = FIELD_RULES[key]?.validator(value) || null;
+      setErrors((prev) => ({ ...prev, [key]: err }));
+    }
+  };
+
   return (
     <div className="bg-white rounded-3xl shadow-lg border border-slate-100 overflow-hidden">
 
@@ -260,7 +323,7 @@ function CardContent({ step, answers, onChange, onAnswer, onNext, onBack, isFirs
 
       {/* Content */}
       <div className="px-6 sm:px-8 py-7">
-        {step.type === "info"    && <StepInfo    step={step} answers={answers} onChange={onChange} />}
+        {step.type === "info"    && <StepInfo    step={step} answers={answers} onChange={handleChange} errors={errors} />}
         {step.type === "q1_item" && <StepQ1Item  step={step} answers={answers} onAnswer={onAnswer} />}
         {step.type === "yesno"   && <StepYesNo   step={step} answers={answers} onAnswer={onAnswer} />}
         {step.type === "choice4" && <StepChoice4 step={step} answers={answers} onAnswer={onAnswer} />}
@@ -284,7 +347,7 @@ function CardContent({ step, answers, onChange, onAnswer, onNext, onBack, isFirs
         {step.type === "info" && (
           <button
             type="button"
-            onClick={onNext}
+            onClick={handleNext}
             className="flex items-center gap-2 px-7 py-3 rounded-sm font-semibold text-sm bg-[#7d4f50] text-white shadow-md shadow-blue-200 transition-all focus:outline-none focus:ring-2 focus:ring-offset-2"
             style={{ fontFamily: "'Source Sans 3', sans-serif" }}
           >

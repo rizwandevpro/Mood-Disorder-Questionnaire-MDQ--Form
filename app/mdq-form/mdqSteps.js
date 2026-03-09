@@ -33,14 +33,14 @@ export const STEPS = [
   {
     id: "info",
     type: "info",
-    autoAdvance: false, // keeps Next button
+    autoAdvance: false,
     title: "Patient Information",
     subtitle: "Enter your details before we begin.",
     fields: [
       { key: "name",  label: "Full Name",     type: "text",  placeholder: "Enter your full name" },
       { key: "date",  label: "Date",          type: "date",  placeholder: "" },
-      { key: "email", label: "Email Address", type: "email", placeholder: "Enter your email address" },
-      { key: "phone", label: "Phone Number",  type: "tel",   placeholder: "Enter your phone number" },
+      { key: "email", label: "Email Address", type: "email", placeholder: "e.g. name@example.com" },
+      { key: "phone", label: "Phone Number",  type: "tel",   placeholder: "e.g. 03001234567" },
     ],
   },
 
@@ -50,10 +50,9 @@ export const STEPS = [
     type:        "q1_item",
     autoAdvance: true,
     key:         item.key,
-    itemIndex:   i,           // which Q1 item (0-based)
-    itemNumber:  i + 1,       // human label "1 of 13"
+    itemIndex:   i,
+    itemNumber:  i + 1,
     label:       item.label,
-    // Q1 section header shown above the card on all 13 steps
     q1Header: {
       title:    "Question 1",
       subtitle: "Has there ever been a period of time when you were NOT your usual self and…",
