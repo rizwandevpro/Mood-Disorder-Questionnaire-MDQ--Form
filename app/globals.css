@@ -1,26 +1,41 @@
 @import "tailwindcss";
 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
-}
+/*
+ * ─────────────────────────────────────────────────────────────────────────────
+ * Tailwind CSS v4 — @source inline() safelist
+ *
+ * In v4 there is no tailwind.config.js safelist option.
+ * Instead, use @source inline() to force-generate any classes that are built
+ * dynamically at runtime (e.g. from a JS object lookup or ternary) and would
+ * otherwise be purged because Tailwind's scanner can't see the full string.
+ *
+ * Affected patterns in this project:
+ *   • col-span-{1..4}          — from SPAN_MAP object lookup
+ *   • grid-cols-{1..12}        — layout grids
+ *   • sm: / lg: responsive     — responsive variants on grids
+ * ─────────────────────────────────────────────────────────────────────────────
+ */
 
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
-}
+/* ── Grid column spans (used via SPAN_MAP lookup) ── */
+@source inline("col-span-{1,2,3,4}");
+@source inline("sm:col-span-{1,2,3,4}");
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
-}
+/* ── Grid template columns ── */
+@source inline("grid-cols-{1,2,3,4,5,12}");
+@source inline("sm:grid-cols-{1,2,3,4,5}");
+@source inline("lg:grid-cols-{1,2,3,4,5}");
 
-body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
-}
+/* ── Width utilities used dynamically ── */
+@source inline("w-{24,32,40,44,64}");
+
+/* ── Custom brand color used in arbitrary values ── */
+@source inline("bg-[#7d4f50]");
+@source inline("border-[#7d4f50]");
+@source inline("text-[#7d4f50]");
+@source inline("accent-[#7d4f50]");
+
+/* ── Arbitrary text sizes ── */
+@source inline("text-[8px] text-[9px] text-[10px] text-[11px]");
+
+/* ── min-w arbitrary ── */
+@source inline("min-w-[200px]");
