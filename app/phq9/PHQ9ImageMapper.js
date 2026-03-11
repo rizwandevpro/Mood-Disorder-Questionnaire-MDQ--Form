@@ -23,13 +23,13 @@
 import { useEffect, useRef } from "react";
 import { QUESTIONS, OPTIONS, DIFFICULTY_OPTIONS } from "./phq9Steps";
 
-const CANVAS_W = 1700;
-const CANVAS_H = 2244;
+const CANVAS_W = 1809;
+const CANVAS_H = 2352;
 const BG_SRC   = "/Patient-Health-Questionnaire-PHQ-9.png";
 const BRAND    = "#7d4f50";
 
 // Q1–Q9 option x positions: [Not at all, Several days, More than half, Nearly every day]
-const OPTION_X = [1062, 1230, 1400, 1570];
+const OPTION_X = [1055, 1230, 1395, 1572];
 
 const Q_COORDS = [
   { key:"q1", y: 524  },
@@ -58,8 +58,8 @@ const DIFFICULTY_COORDS = [
 ];
 
 // Name/Date approximate positions on form
-const NAME_X = 280;  const NAME_Y = 195;
-const DATE_X = 1200; const DATE_Y = 195;
+const NAME_X = 403;  const NAME_Y = 241;
+const DATE_X = 1412; const DATE_Y = 241;
 
 function drawCheck(ctx, x, y) {
   const s = 14;
@@ -142,7 +142,7 @@ export default function PHQ9ImageMapper({ answers, silentMode, onPdfReady }) {
       ctx.fillStyle = BRAND;
       ctx.textAlign = "center";
       ctx.textBaseline = "middle";
-      ctx.fillText(String(total), 1350, 1820);
+      ctx.fillText(String(total), 1350, 1864);
       ctx.restore();
 
       // ── Q10 difficulty ──

@@ -87,51 +87,51 @@ function drawPage1(ctx, answers) {
 
   // ── Conditions checkboxes ──────────────────────────────────────────────────
   const condMap = {
-    "AIDS":                    [48,  887],
-    "Alcoholism":              [48,  928],
-    "Anemia":                  [48,  964],
-    "Anorexia":                [48,  999],
-    "Anxiety":                 [48, 1034],
-    "Arthritis":               [48, 1069],
-    "Asthma":                  [48, 1104],
-    "Bleeding Disorder":       [48, 1140],
-    "Breast Lump":             [48, 1175],
-    "Bronchitis":             [330,  890],
-    "Bulimia":                [330,  928],
-    "CAD / heart disease":    [330,  964],
-    "Cancer":                 [330,  999],
-    "Chemical Dependency":    [330, 1069],
-    "Depression":             [330, 1104],
-    "Diabetes":               [330, 1140],
-    "Emphysema / COPD":       [330, 1178],
-    "Epilepsy":               [330, 1210],
-    "GERD (reflux)":          [666,  890],
-    "Glaucoma":               [666,  928],
-    "Goiter":                 [666,  964],
-    "Gout":                   [666,  999],
-    "Headaches":              [666, 1034],
-    "Heart attack":           [666, 1069],
-    "Hepatitis":              [666, 1104],
-    "Herpes":                 [666, 1140],
-    "High blood pressure":    [666, 1178],
-    "HIV positive":           [974,  890],
-    "Kidney disease":         [974,  928],
-    "Liver disease":          [974,  964],
-    "Multiple sclerosis":     [974,  999],
-    "Pacemaker":              [974, 1034],
-    "Pneumonia":              [974, 1069],
-    "Prostate problem":       [974, 1104],
-    "Psychiatric care":       [974, 1140],
-    "Rheumatic fever":        [974, 1178],
-    "Rhinitis":              [1250,  890],
-    "Sexually Transmitted":  [1250,  928],
-    "Infection":             [1250,  964],
-    "Stroke":                [1250,  999],
-    "Suicide attempt":       [1250, 1034],
-    "Thyroid problem":       [1250, 1069],
-    "Tuberculosis":          [1250, 1104],
-    "Ulcer(s)":              [1250, 1140],
-    "Vaginal infections":    [1250, 1178],
+    "AIDS":                    [47,  885],
+    "Alcoholism":              [47,  926],
+    "Anemia":                  [47,  962],
+    "Anorexia":                [47,  997],
+    "Anxiety":                 [47, 1032],
+    "Arthritis":               [47, 1067],
+    "Asthma":                  [47, 1102],
+    "Bleeding Disorder":       [47, 1138],
+    "Breast Lump":             [47, 1173],
+    "Bronchitis":             [329,  888],
+    "Bulimia":                [329,  926],
+    "CAD / heart disease":    [329,  962],
+    "Cancer":                 [329,  998],
+    "Chemical Dependency":    [329, 1067],
+    "Depression":             [329, 1102],
+    "Diabetes":               [329, 1138],
+    "Emphysema / COPD":       [329, 1172],
+    "Epilepsy":               [329, 1208],
+    "GERD (reflux)":          [665,  888],
+    "Glaucoma":               [665,  926],
+    "Goiter":                 [665,  962],
+    "Gout":                   [665,  997],
+    "Headaches":              [665, 1032],
+    "Heart attack":           [665, 1067],
+    "Hepatitis":              [665, 1102],
+    "Herpes":                 [665, 1138],
+    "High blood pressure":    [665, 1176],
+    "HIV positive":           [973,  888],
+    "Kidney disease":         [973,  926],
+    "Liver disease":          [973,  962],
+    "Multiple sclerosis":     [973,  997],
+    "Pacemaker":              [973, 1032],
+    "Pneumonia":              [973, 1067],
+    "Prostate problem":       [973, 1102],
+    "Psychiatric care":       [973, 1138],
+    "Rheumatic fever":        [973, 1176],
+    "Rhinitis":              [1249,  888],
+    "Sexually Transmitted":  [1249,  926],
+    "Infection":             [1249,  962],
+    "Stroke":                [1249,  997],
+    "Suicide attempt":       [1249, 1032],
+    "Thyroid problem":       [1249, 1067],
+    "Tuberculosis":          [1249, 1102],
+    "Ulcer(s)":              [1249, 1138],
+    "Vaginal infections":    [1249, 1176],
   };
 
   Object.entries(condMap).forEach(([cond, [x, y]]) => {
@@ -144,59 +144,59 @@ function drawPage1(ctx, answers) {
     t(answers.cancerType, 400, 1034, 200, 18);
   }
 
-  cb(answers.cond_Other, 48, 1274);
+  cb(answers.cond_Other, 47, 1272);
   if (answers.cond_Other) {
-    t(answers.condOtherText, 100, 1274, 700);
+    t(answers.condOtherText, 100, 1277, 700);
   }
 
   // ── Allergies ──────────────────────────────────────────────────────────────
-  cb(answers.allergyNone, 48,  1409);
-  cb(answers.allergyYes, 381,  1409);
+  cb(answers.allergyNone, 47,  1409);
+  cb(answers.allergyYes, 381,  1407);
   if (answers.allergyYes && answers.allergyList) {
     // Draw allergy text — wrap manually across multiple lines
     const lines = wrapText(ctx, answers.allergyList, 1100, FONT_SIZE);
-    lines.forEach((line, i) => t(line, 413, 1441 + i * (FONT_SIZE + 6), 1100));
+    lines.forEach((line, i) => t(line, 413, 1447 + i * (FONT_SIZE + 6), 1100));
   }
 
   // ── Medications ────────────────────────────────────────────────────────────
   if (answers.medications) {
     const lines = wrapText(ctx, answers.medications, 1520, FONT_SIZE);
-    lines.forEach((line, i) => t(line, 32, 1595 + i * (FONT_SIZE + 8), 1520));
+    lines.forEach((line, i) => t(line, 32, 1600 + i * (FONT_SIZE + 8), 1520));
   }
 
   // ── Health Habits ──────────────────────────────────────────────────────────
   // Caffeine
   cb(answers.habCaffeineUse,  314, 1830);
   cb(answers.habCaffeineNone, 354, 1830);
-  t(answers.habCaffeineDrinks, 682, 1848, 200);
-  t(answers.habCaffeinePer,    929, 1848, 200);
+  t(answers.habCaffeineDrinks, 682, 1851, 200);
+  t(answers.habCaffeinePer,    929, 1851, 200);
 
   // Tobacco
-  cb(answers.habTobaccoUse,   314, 1865);
-  cb(answers.habTobaccoNone,  354, 1865);
-  t(answers.habTobaccoCigs,   682, 1880, 200);
-  cb(answers.habTobaccoQuit, 1135, 1865);
-  t(answers.habTobaccoQuitDate, 1220, 1880, 300);
+  cb(answers.habTobaccoUse,   314, 1880);
+  cb(answers.habTobaccoNone,  354, 1880);
+  t(answers.habTobaccoCigs,   682, 1882, 200);
+  cb(answers.habTobaccoQuit, 1135, 1880);
+  t(answers.habTobaccoQuitDate, 1135, 1880, 300);
 
   // Alcohol
-  cb(answers.habAlcoholUse,   314, 1901);
-  cb(answers.habAlcoholNone,  354, 1901);
+  cb(answers.habAlcoholUse,   314, 1918);
+  cb(answers.habAlcoholNone,  654, 1918);
   t(answers.habAlcoholDrinks, 682, 1920, 200);
-  t(answers.habAlcoholPer,    929, 1920, 200);
+  t(answers.habAlcoholPer,    936, 1920, 200);
 
   // Drugs
-  cb(answers.habDrugsUse,  314, 1938);
-  cb(answers.habDrugsNone, 354, 1938);
-  t(answers.habDrugsDesc,  795, 1960, 700);
+  cb(answers.habDrugsUse,  314, 1953);
+  cb(answers.habDrugsNone, 654, 1953);
+  t(answers.habDrugsDesc,  811, 1960, 700);
 
   // Diet / Exercise
-  t(answers.habDietDesc,     423, 1995, 1100);
-  t(answers.habExerciseDesc, 423, 2030, 1100);
+  t(answers.habDietDesc,     436, 1995, 1100);
+  t(answers.habExerciseDesc, 436, 2030, 1100);
 
   // Seatbelts
-  cb(answers.habSeatbelt === "Always",    314, 2044);
-  cb(answers.habSeatbelt === "Never",     654, 2044);
-  cb(answers.habSeatbelt === "Sometimes", 1135, 2044);
+  cb(answers.habSeatbelt === "Always",    314, 2062);
+  cb(answers.habSeatbelt === "Never",     654, 2062);
+  cb(answers.habSeatbelt === "Sometimes", 1135, 2062);
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -227,10 +227,10 @@ function drawPage2(ctx, answers) {
 
   // ── Pregnancy History ──────────────────────────────────────────────────────
   // Stats — need coords from form. Using estimated positions near top-right of pregnancy header
-  t(answers.pregNum,        940, 390, 100);
-  t(answers.pregLiving,    1116, 390, 100);
-  t(answers.pregDeliveries, 940, 425, 100);
-  t(answers.pregVaginal,   1116, 425, 100);
+  t(answers.pregNum,        1132, 342, 100);
+  t(answers.pregLiving,    1440, 342, 100);
+  t(answers.pregDeliveries, 1248, 374, 100);
+  t(answers.pregVaginal,   1437, 371, 100);
 
   const childCoords = [
     [940, 470,  1116, 470,  1203, 470],
@@ -293,16 +293,16 @@ function drawPage2(ctx, answers) {
 
   // ── Disease checkboxes + relationship ─────────────────────────────────────
   const diseases = [
-    ["Arthritis",          972, 1200],
-    ["Asthma",             972, 1242],
-    ["Cancer",             972, 1290],
-    ["Diabetes",           972, 1332],
-    ["Gout",               972, 1367],
-    ["Heart Disease",      972, 1406],
-    ["High blood pressure",972, 1444],
-    ["Kidney Disease",     972, 1482],
-    ["Stroke",             972, 1518],
-    ["Other",              972, 1556],
+    ["Arthritis",          970, 1200],
+    ["Asthma",             970, 1242],
+    ["Cancer",             970, 1290],
+    ["Diabetes",           970, 1332],
+    ["Gout",               970, 1367],
+    ["Heart Disease",      970, 1406],
+    ["High blood pressure",970, 1444],
+    ["Kidney Disease",     970, 1482],
+    ["Stroke",             970, 1518],
+    ["Other",              970, 1556],
   ];
 
   diseases.forEach(([name, x, y]) => {

@@ -268,9 +268,9 @@ function StepConditions({ answers, onChange }) {
   );
 }
 
-// ── Step 3: Allergies & Medications ──────────────────────────────────────────
-function StepAllergiesMeds({ answers, onChange }) {
-  const CheckRow = ({ label, checked, onToggle }) => (
+// ── AllergyCheckRow — defined outside to prevent remount on each render
+function AllergyCheckRow({ label, checked, onToggle }) {
+  return (
     <div onClick={onToggle} style={{display:"flex",alignItems:"center",gap:"10px",cursor:"pointer",padding:"10px 12px",borderRadius:"10px",border:`2px solid ${checked?BRAND:"#e2e8f0"}`,backgroundColor:checked?BRAND_LIGHT:"#f8fafc",userSelect:"none",transition:"all 0.15s"}}>
       <div style={{width:"18px",height:"18px",borderRadius:"5px",border:`2px solid ${checked?BRAND:"#cbd5e1"}`,backgroundColor:checked?BRAND:"white",flexShrink:0,display:"flex",alignItems:"center",justifyContent:"center",transition:"all 0.15s"}}>
         {checked && <svg width="11" height="11" fill="none" viewBox="0 0 12 12" stroke="white" strokeWidth={2.5}><path strokeLinecap="round" strokeLinejoin="round" d="M2 6l3 3 5-5"/></svg>}
@@ -278,14 +278,17 @@ function StepAllergiesMeds({ answers, onChange }) {
       <span style={{fontSize:"14px",fontWeight:600,color:checked?BRAND:"#374151",fontFamily:"'Source Sans 3', sans-serif"}}>{label}</span>
     </div>
   );
+}
 
+// ── Step 3: Allergies & Medications ──────────────────────────────────────────
+function StepAllergiesMeds({ answers, onChange }) {
   return (
     <div style={{display:"flex",flexDirection:"column",gap:"24px"}}>
       <div>
         {sectionTitle("Allergies")}
         <div style={{display:"flex",flexDirection:"column",gap:"10px"}}>
-          <CheckRow label="No known allergies" checked={!!answers.allergyNone} onToggle={()=>{onChange("allergyNone",!answers.allergyNone);if(!answers.allergyNone)onChange("allergyYes",false);}} />
-          <CheckRow label="Yes, I have the following allergies:" checked={!!answers.allergyYes} onToggle={()=>{onChange("allergyYes",!answers.allergyYes);if(!answers.allergyYes)onChange("allergyNone",false);}} />
+          <AllergyCheckRow label="No known allergies" checked={!!answers.allergyNone} onToggle={()=>{onChange("allergyNone",!answers.allergyNone);if(!answers.allergyNone)onChange("allergyYes",false);}} />
+          <AllergyCheckRow label="Yes, I have the following allergies:" checked={!!answers.allergyYes} onToggle={()=>{onChange("allergyYes",!answers.allergyYes);if(!answers.allergyYes)onChange("allergyNone",false);}} />
           {answers.allergyYes && (
             <textarea value={answers.allergyList||""} onChange={e=>onChange("allergyList",e.target.value)}
               placeholder="List all known allergies to medications or substances…" rows={3}
@@ -304,16 +307,18 @@ function StepAllergiesMeds({ answers, onChange }) {
     </div>
   );
 }
-
-// ── Step 4: Health Habits ─────────────────────────────────────────────────────
-function StepHealthHabits({ answers, onChange }) {
-  const SmallInput = ({ k, placeholder, width="100px" }) => (
-    <input type="text" value={answers[k]||""} onChange={e=>onChange(k,e.target.value)} placeholder={placeholder}
+// ── Habit helpers — defined OUTSIDE StepHealthHabits so React doesn't
+//    treat them as new component types on each render (which would steal focus)
+function SmallInput({ fieldKey, value, onChange, placeholder, width="100px" }) {
+  return (
+    <input type="text" value={value||""} onChange={e=>onChange(fieldKey,e.target.value)} placeholder={placeholder}
       style={{width,boxSizing:"border-box",border:"2px solid #e2e8f0",borderRadius:"8px",padding:"8px 10px",fontSize:"13px",fontWeight:500,color:"#1e293b",backgroundColor:"#f8fafc",outline:"none",fontFamily:"'Source Sans 3', sans-serif",transition:"border-color 0.15s",minWidth:"70px"}}
       onFocus={e=>e.target.style.borderColor="#3b82f6"} onBlur={e=>e.target.style.borderColor="#e2e8f0"} />
   );
+}
 
-  const SmallCheck = ({ label, checked, onToggle }) => (
+function HabitSmallCheck({ label, checked, onToggle }) {
+  return (
     <div onClick={onToggle} style={{display:"flex",alignItems:"center",gap:"6px",cursor:"pointer",padding:"6px 10px",borderRadius:"8px",border:`2px solid ${checked?BRAND:"#e2e8f0"}`,backgroundColor:checked?BRAND_LIGHT:"#f8fafc",userSelect:"none",transition:"all 0.15s",flexShrink:0}}>
       <div style={{width:"14px",height:"14px",borderRadius:"3px",border:`2px solid ${checked?BRAND:"#cbd5e1"}`,backgroundColor:checked?BRAND:"white",display:"flex",alignItems:"center",justifyContent:"center",transition:"all 0.15s"}}>
         {checked && <svg width="9" height="9" fill="none" viewBox="0 0 12 12" stroke="white" strokeWidth={2.5}><path strokeLinecap="round" strokeLinejoin="round" d="M2 6l3 3 5-5"/></svg>}
@@ -321,10 +326,10 @@ function StepHealthHabits({ answers, onChange }) {
       <span style={{fontSize:"12px",fontWeight:600,color:checked?BRAND:"#374151",fontFamily:"'Source Sans 3', sans-serif",whiteSpace:"nowrap"}}>{label}</span>
     </div>
   );
+}
 
-  const note = t => <span style={{fontSize:"12px",color:"#94a3b8",fontFamily:"'Source Sans 3', sans-serif",whiteSpace:"nowrap"}}>{t}</span>;
-
-  const Row = ({ label, children }) => (
+function HabitRow({ label, children }) {
+  return (
     <div className="hh-habit-row">
       <div className="hh-habit-label">
         <span style={{fontSize:"14px",fontWeight:700,color:"#374151",fontFamily:"'Source Sans 3', sans-serif"}}>{label}</span>
@@ -332,63 +337,66 @@ function StepHealthHabits({ answers, onChange }) {
       <div className="hh-habit-controls">{children}</div>
     </div>
   );
+}
+
+function StepHealthHabits({ answers, onChange }) {
+  const note = t => <span style={{fontSize:"12px",color:"#94a3b8",fontFamily:"'Source Sans 3', sans-serif",whiteSpace:"nowrap"}}>{t}</span>;
 
   return (
     <div style={{backgroundColor:"white",borderRadius:"12px",border:"1px solid #f1f5f9",padding:"0 4px"}}>
-      <Row label="Caffeine">
-        <SmallCheck label="Uses" checked={!!answers.habCaffeineUse} onToggle={()=>onChange("habCaffeineUse",!answers.habCaffeineUse)} />
-        <SmallCheck label="None"  checked={!!answers.habCaffeineNone} onToggle={()=>{onChange("habCaffeineNone",!answers.habCaffeineNone);if(!answers.habCaffeineNone)onChange("habCaffeineUse",false);}} />
-        <SmallInput k="habCaffeineDrinks" placeholder="Amount" />
+      <HabitRow label="Caffeine">
+        <HabitSmallCheck label="Uses" checked={!!answers.habCaffeineUse} onToggle={()=>onChange("habCaffeineUse",!answers.habCaffeineUse)} />
+        <HabitSmallCheck label="None"  checked={!!answers.habCaffeineNone} onToggle={()=>{onChange("habCaffeineNone",!answers.habCaffeineNone);if(!answers.habCaffeineNone)onChange("habCaffeineUse",false);}} />
+        <SmallInput fieldKey="habCaffeineDrinks" value={answers.habCaffeineDrinks} onChange={onChange} placeholder="Amount" />
         {note("drinks per")}
-        <SmallInput k="habCaffeinePer" placeholder="Day/week" />
-      </Row>
-      <Row label="Tobacco">
-        <SmallCheck label="Uses" checked={!!answers.habTobaccoUse} onToggle={()=>onChange("habTobaccoUse",!answers.habTobaccoUse)} />
-        <SmallCheck label="None" checked={!!answers.habTobaccoNone} onToggle={()=>{onChange("habTobaccoNone",!answers.habTobaccoNone);if(!answers.habTobaccoNone)onChange("habTobaccoUse",false);}} />
-        <SmallInput k="habTobaccoCigs" placeholder="Amount" />
+        <SmallInput fieldKey="habCaffeinePer" value={answers.habCaffeinePer} onChange={onChange} placeholder="Day/week" />
+      </HabitRow>
+      <HabitRow label="Tobacco">
+        <HabitSmallCheck label="Uses" checked={!!answers.habTobaccoUse} onToggle={()=>onChange("habTobaccoUse",!answers.habTobaccoUse)} />
+        <HabitSmallCheck label="None" checked={!!answers.habTobaccoNone} onToggle={()=>{onChange("habTobaccoNone",!answers.habTobaccoNone);if(!answers.habTobaccoNone)onChange("habTobaccoUse",false);}} />
+        <SmallInput fieldKey="habTobaccoCigs" value={answers.habTobaccoCigs} onChange={onChange} placeholder="Amount" />
         {note("cigs/day")}
-        <SmallCheck label="Quit?" checked={!!answers.habTobaccoQuit} onToggle={()=>onChange("habTobaccoQuit",!answers.habTobaccoQuit)} />
-        {answers.habTobaccoQuit && <SmallInput k="habTobaccoQuitDate" placeholder="Around when?" width="130px" />}
-      </Row>
-      <Row label="Alcohol">
-        <SmallCheck label="Uses" checked={!!answers.habAlcoholUse} onToggle={()=>onChange("habAlcoholUse",!answers.habAlcoholUse)} />
-        <SmallCheck label="None" checked={!!answers.habAlcoholNone} onToggle={()=>{onChange("habAlcoholNone",!answers.habAlcoholNone);if(!answers.habAlcoholNone)onChange("habAlcoholUse",false);}} />
-        <SmallInput k="habAlcoholDrinks" placeholder="Amount" />
+        <HabitSmallCheck label="Quit?" checked={!!answers.habTobaccoQuit} onToggle={()=>onChange("habTobaccoQuit",!answers.habTobaccoQuit)} />
+        {answers.habTobaccoQuit && <SmallInput fieldKey="habTobaccoQuitDate" value={answers.habTobaccoQuitDate} onChange={onChange} placeholder="Around when?" width="130px" />}
+      </HabitRow>
+      <HabitRow label="Alcohol">
+        <HabitSmallCheck label="Uses" checked={!!answers.habAlcoholUse} onToggle={()=>onChange("habAlcoholUse",!answers.habAlcoholUse)} />
+        <HabitSmallCheck label="None" checked={!!answers.habAlcoholNone} onToggle={()=>{onChange("habAlcoholNone",!answers.habAlcoholNone);if(!answers.habAlcoholNone)onChange("habAlcoholUse",false);}} />
+        <SmallInput fieldKey="habAlcoholDrinks" value={answers.habAlcoholDrinks} onChange={onChange} placeholder="Amount" />
         {note("drinks per")}
-        <SmallInput k="habAlcoholPer" placeholder="Day/week" />
-      </Row>
-      <Row label="Drugs">
-        <SmallCheck label="Uses" checked={!!answers.habDrugsUse} onToggle={()=>onChange("habDrugsUse",!answers.habDrugsUse)} />
-        <SmallCheck label="None" checked={!!answers.habDrugsNone} onToggle={()=>{onChange("habDrugsNone",!answers.habDrugsNone);if(!answers.habDrugsNone)onChange("habDrugsUse",false);}} />
+        <SmallInput fieldKey="habAlcoholPer" value={answers.habAlcoholPer} onChange={onChange} placeholder="Day/week" />
+      </HabitRow>
+      <HabitRow label="Drugs">
+        <HabitSmallCheck label="Uses" checked={!!answers.habDrugsUse} onToggle={()=>onChange("habDrugsUse",!answers.habDrugsUse)} />
+        <HabitSmallCheck label="None" checked={!!answers.habDrugsNone} onToggle={()=>{onChange("habDrugsNone",!answers.habDrugsNone);if(!answers.habDrugsNone)onChange("habDrugsUse",false);}} />
         {note("Describe:")}
-        <SmallInput k="habDrugsDesc" placeholder="Description" width="200px" />
-      </Row>
-      <Row label="Diet">
+        <SmallInput fieldKey="habDrugsDesc" value={answers.habDrugsDesc} onChange={onChange} placeholder="Description" width="200px" />
+      </HabitRow>
+      <HabitRow label="Diet">
         <input type="text" value={answers.habDietDesc||""} onChange={e=>onChange("habDietDesc",e.target.value)}
           placeholder="Describe your diet…"
           style={{flex:1,minWidth:"120px",border:"2px solid #e2e8f0",borderRadius:"8px",padding:"8px 10px",fontSize:"13px",fontWeight:500,color:"#1e293b",backgroundColor:"#f8fafc",outline:"none",fontFamily:"'Source Sans 3', sans-serif"}}
           onFocus={e=>e.target.style.borderColor="#3b82f6"} onBlur={e=>e.target.style.borderColor="#e2e8f0"} />
-      </Row>
-      <Row label="Exercise">
+      </HabitRow>
+      <HabitRow label="Exercise">
         <input type="text" value={answers.habExerciseDesc||""} onChange={e=>onChange("habExerciseDesc",e.target.value)}
           placeholder="Describe your exercise…"
           style={{flex:1,minWidth:"120px",border:"2px solid #e2e8f0",borderRadius:"8px",padding:"8px 10px",fontSize:"13px",fontWeight:500,color:"#1e293b",backgroundColor:"#f8fafc",outline:"none",fontFamily:"'Source Sans 3', sans-serif"}}
           onFocus={e=>e.target.style.borderColor="#3b82f6"} onBlur={e=>e.target.style.borderColor="#e2e8f0"} />
-      </Row>
+      </HabitRow>
       <div className="hh-habit-row" style={{borderBottom:"none"}}>
         <div className="hh-habit-label">
           <span style={{fontSize:"14px",fontWeight:700,color:"#374151",fontFamily:"'Source Sans 3', sans-serif"}}>Seatbelts</span>
         </div>
         <div className="hh-habit-controls">
           {["Always","Never","Sometimes"].map(v => (
-            <SmallCheck key={v} label={v} checked={answers.habSeatbelt===v} onToggle={()=>onChange("habSeatbelt",v)} />
+            <HabitSmallCheck key={v} label={v} checked={answers.habSeatbelt===v} onToggle={()=>onChange("habSeatbelt",v)} />
           ))}
         </div>
       </div>
     </div>
   );
 }
-
 // ── Dynamic Table ─────────────────────────────────────────────────────────────
 function DynamicTable({ title, columns, rows, setRows, maxRows, rowTemplate }) {
   return (
@@ -689,7 +697,9 @@ function validateHHStep(step, answers) {
 // ── Card ──────────────────────────────────────────────────────────────────────
 function Card({ step, answers, onChange, onNext, onBack, isFirst, isLast }) {
   const [errors, setErrors] = useState({});
-  const handleChange = (key,value) => { onChange(key,value); if(errors[key])setErrors(p=>({...p,[key]:null})); };
+  const errorsRef = useRef(errors);
+  errorsRef.current = errors;
+  const handleChange = useCallback((key,value) => { onChange(key,value); if(errorsRef.current[key])setErrors(p=>({...p,[key]:null})); },[onChange]);
   const handleNext = () => { const errs=validateHHStep(step,answers); if(Object.keys(errs).length>0){setErrors(errs);return;} setErrors({}); onNext(); };
 
   const renderContent = () => {
