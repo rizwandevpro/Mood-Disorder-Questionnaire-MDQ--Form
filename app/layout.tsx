@@ -13,8 +13,8 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Mood Disorder Questionnaire (MDQ)",
-  description: "Mood Disorder Questionnaire (MDQ)",
+  title: "Cambridge Psychiatrist Patient Forms",
+  description: "Cambridge Psychiatrist Patient Forms",
 };
 
 export default function RootLayout({

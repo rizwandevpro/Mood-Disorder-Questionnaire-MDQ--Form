@@ -9,10 +9,11 @@
 // Props:
 //   answers    — combined answers object (all HIPAA + Intake keys merged)
 //   silentMode — must be true; this component is always off-screen
-//   onPdfReady — called with () => { triggers download } once PDF is ready
+//   onPdfReady — called with (downloadFn, blob) once PDF is ready
+//                 blob is the raw PDF Blob — use it to send via API without interception
 //
 // Usage in page.js:
-//   <CombinedImageMapper answers={answers} silentMode onPdfReady={fn => setDownloadFn(() => fn)} />
+//   <CombinedImageMapper answers={answers} silentMode onPdfReady={(fn, blob) => { setDownloadFn(() => fn); sendByEmail(blob); }} />
 // ─────────────────────────────────────────────────────────────────────────────
 
 import { useEffect, useRef } from "react";
@@ -264,15 +265,18 @@ function buildCombinedPdf(hipaaCanvas, intakeCanvas, onPdfReady) {
     const intakeDataUrl = intakeCanvas.toDataURL("image/jpeg", 1.0);
     pdf.addImage(intakeDataUrl, "JPEG", 0, 0, I_W_PT, I_H_PT);
 
-    // Deliver
+    // Deliver — pass both the download fn AND the raw blob to onPdfReady
     const blob = pdf.output("blob");
     const url  = URL.createObjectURL(blob);
-    onPdfReady(() => {
-      const a = document.createElement("a");
-      a.href     = url;
-      a.download = "Cambridge-Psychiatry-HIPAA-and-Intake.pdf";
-      a.click();
-    });
+    onPdfReady(
+      () => {
+        const a = document.createElement("a");
+        a.href     = url;
+        a.download = "Cambridge-Psychiatry-HIPAA-and-Intake.pdf";
+        a.click();
+      },
+      blob   // second arg — raw Blob for email sending without interception
+    );
   }).catch(err => console.error("jsPDF error:", err));
 }
 

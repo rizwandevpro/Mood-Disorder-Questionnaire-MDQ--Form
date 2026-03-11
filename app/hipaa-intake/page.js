@@ -58,7 +58,9 @@ export default function HIPAAIntakePage() {
   const [answers,    setAnswers]    = useState({});
 
   // PDF state — we wait for both ImageMappers to fire before enabling download
-  const [downloadFn, setDownloadFn] = useState(null);
+  const [downloadFn,  setDownloadFn]  = useState(null);
+  const [emailStatus, setEmailStatus] = useState("idle"); // idle | sending | sent | error
+  const emailSentRef = useRef(false); // prevents double-send on re-render
 
   const onThankYou  = globalStep === THANKYOU_STEP;
   const inHIPAA     = globalStep < HIPAA_STEPS;
@@ -87,6 +89,7 @@ export default function HIPAAIntakePage() {
     setAnswers({});
     setGlobalStep(0);
     setDownloadFn(null);
+    emailSentRef.current = false;
     window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
@@ -271,6 +274,25 @@ export default function HIPAAIntakePage() {
                 >
                   Start Over
                 </button>
+
+                {/* Email status */}
+                {emailStatus === "sending" && (
+                  <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: "8px", fontSize: "13px", color: "#64748b", fontFamily: "'Source Sans 3', sans-serif" }}>
+                    <div style={{ width: "12px", height: "12px", border: "2px solid #cbd5e1", borderTopColor: "#7d4f50", borderRadius: "50%", animation: "combinedSpin 0.8s linear infinite", flexShrink: 0 }} />
+                    Sending forms to your email…
+                  </div>
+                )}
+                {emailStatus === "sent" && (
+                  <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: "6px", fontSize: "13px", color: "#16a34a", fontFamily: "'Source Sans 3', sans-serif" }}>
+                    <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}><path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7"/></svg>
+                    Forms emailed to {answers.email ? `you (${answers.email}) and ` : ""}our office
+                  </div>
+                )}
+                {emailStatus === "error" && (
+                  <div style={{ fontSize: "13px", color: "#dc2626", textAlign: "center", fontFamily: "'Source Sans 3', sans-serif" }}>
+                    Email delivery failed — please download the PDF above.
+                  </div>
+                )}
               </div>
 
               {/* ── Combined PDF builder — single 2-page PDF ── */}
@@ -281,7 +303,51 @@ export default function HIPAAIntakePage() {
                 <CombinedImageMapper
                   answers={answers}
                   silentMode
-                  onPdfReady={fn => setDownloadFn(() => fn)}
+                  onPdfReady={(fn, blob) => {
+                    // fn      = download trigger (anchor click)
+                    // blob    = raw PDF Blob passed directly from CombinedImageMapper
+                    setDownloadFn(() => fn);
+
+                    // Guard against double-fire from React re-renders
+                    if (emailSentRef.current) return;
+                    emailSentRef.current = true;
+
+                    // Auto-download
+                    fn();
+
+                    // Auto-email: blob → base64 → POST /api/send-forms
+                    setEmailStatus("sending");
+                    const patientName = [answers.firstName || answers.printName, answers.lastName].filter(Boolean).join(" ");
+                    const patientEmail = (answers.email || "").trim();
+                    console.log("[hipaa-intake] Sending PDF email — patientEmail:", patientEmail, "patientName:", patientName);
+                    blob.arrayBuffer()
+                      .then(buf => {
+                        // btoa on large buffers needs chunked approach to avoid stack overflow
+                        const bytes = new Uint8Array(buf);
+                        let binary = "";
+                        const chunk = 8192;
+                        for (let i = 0; i < bytes.length; i += chunk) {
+                          binary += String.fromCharCode(...bytes.subarray(i, i + chunk));
+                        }
+                        const base64 = btoa(binary);
+                        return fetch("/api/send-forms", {
+                          method:  "POST",
+                          headers: { "Content-Type": "application/json" },
+                          body: JSON.stringify({
+                            pdfBase64:    base64,
+                            patientEmail: patientEmail,
+                            patientName,
+                            fileName:     "Cambridge-Psychiatry-HIPAA-and-Intake.pdf",
+                          }),
+                        });
+                      })
+                      .then(r => r.json())
+                      .then(data => {
+                        if (data.success) setEmailStatus("sent");
+                        else { console.error("Email error:", data.error); setEmailStatus("error"); }
+                      })
+                      .catch(err => { console.error("Email send failed:", err); setEmailStatus("error"); });
+                  }}
                 />
               </div>
 
