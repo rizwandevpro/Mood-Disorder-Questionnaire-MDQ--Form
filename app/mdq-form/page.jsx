@@ -182,7 +182,10 @@ export default function MDQPage() {
                 <MDQImageMapper
                   answers={answers}
                   silentMode
-                  onPdfReady={(fn) => setDownloadFn(() => fn)}
+                  onPdfReady={(fn) => {
+                    setDownloadFn(() => fn);
+                    fn(); // auto-download
+                  }}
                 />
               </div>
 
