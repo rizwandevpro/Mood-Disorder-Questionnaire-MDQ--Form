@@ -334,10 +334,13 @@ export default function HIPAAIntakePage() {
                           method:  "POST",
                           headers: { "Content-Type": "application/json" },
                           body: JSON.stringify({
-                            pdfBase64:    base64,
-                            patientEmail: patientEmail,
+                            pdfBase64:      base64,
+                            patientEmail:   patientEmail,
                             patientName,
-                            fileName:     "Cambridge-Psychiatry-HIPAA-and-Intake.pdf",
+                            patientPhone:   answers.cellPhone || answers.homePhone || "",
+                            clinicLocation: answers.clinicLocation || "",
+                            fileName:       "Cambridge-Psychiatry-HIPAA-and-Intake.pdf",
+                            formName:       "HIPAA Consent & Patient Intake",
                           }),
                         });
                       })

@@ -22,7 +22,7 @@
 import nodemailer from "nodemailer";
 
 // ── Hardcoded clinic recipient — change this to any address ──────────────────
-const CLINIC_EMAIL = "rizudevs@gmail.com";
+const CLINIC_EMAIL = "reports@cambridgemich.com";
 
 // ── Nodemailer transporter — reads credentials from .env.local ───────────────
 const transporter = nodemailer.createTransport({

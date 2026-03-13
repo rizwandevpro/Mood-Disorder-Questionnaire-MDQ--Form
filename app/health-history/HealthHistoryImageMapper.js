@@ -440,8 +440,9 @@ export default function HealthHistoryImageMapper({ answers, silentMode = false, 
     if (!silentMode || status !== "ready") return;
     (async () => {
       try {
-        const pdf = await buildPdf();
-        if (onPdfReady) onPdfReady(() => pdf.save(`HealthHistory_${answers.hhName || "patient"}.pdf`));
+        const pdf  = await buildPdf();
+        const blob = pdf.output("blob");
+        if (onPdfReady) onPdfReady(() => pdf.save(`HealthHistory_${answers.hhName || "patient"}.pdf`), blob);
       } catch (err) { console.error("Silent PDF failed:", err); }
     })();
   // eslint-disable-next-line react-hooks/exhaustive-deps

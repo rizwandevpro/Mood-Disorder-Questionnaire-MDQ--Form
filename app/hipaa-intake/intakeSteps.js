@@ -45,6 +45,9 @@ export const INTAKE_STEPS = [
       { key: "maritalStatus", label: "Marital Status", type: "select",
         options: ["Single", "Married", "Divorced", "Widowed", "Separated"],
         required: true, span: "half" },
+        { key: "clinicLocation", label: "Clinic Location", type: "select",
+        options: ["Westland", "Hamtramck", "Roseville"],
+        required: true, span: "half" },
     ],
   },
 
