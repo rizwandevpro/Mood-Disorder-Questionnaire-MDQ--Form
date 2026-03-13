@@ -34,7 +34,7 @@ const FORMS = [
     ),
   },
   {
-    href:        "/mdq",
+    href:        "/mdq-form",
     title:       "Mood Disorder Questionnaire",
     description: "Screening tool to help identify symptoms of bipolar disorder.",
     badge:       "Screening",
