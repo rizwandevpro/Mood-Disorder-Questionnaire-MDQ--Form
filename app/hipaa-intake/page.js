@@ -230,6 +230,10 @@ export default function HIPAAIntakePage() {
               <p style={{ fontSize: "14px", color: "#94a3b8", marginBottom: "32px", fontFamily: "'Source Sans 3', sans-serif" }}>
                 Your HIPAA consent and patient intake forms have been recorded.
               </p>
+              <p className="text-slate-500 text-base leading-relaxed max-w-sm mb-8"
+                style={{ fontFamily: "'Source Sans 3', sans-serif" }}>
+                Can't find this email? Please check your spam or junk folder.
+              </p>
 
               {/* Forms included summary */}
               <div style={{ display: "flex", gap: "10px", flexWrap: "wrap", justifyContent: "center", marginBottom: "32px" }}>
@@ -244,6 +248,8 @@ export default function HIPAAIntakePage() {
                   </div>
                 ))}
               </div>
+
+              
 
               {/* Download button */}
               <div style={{ display: "flex", flexDirection: "column", gap: "10px", width: "100%", maxWidth: "320px" }}>

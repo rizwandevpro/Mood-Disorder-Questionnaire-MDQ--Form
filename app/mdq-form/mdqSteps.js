@@ -37,10 +37,12 @@ export const STEPS = [
     title: "Patient Information",
     subtitle: "Enter your details before we begin.",
     fields: [
-      { key: "name",  label: "Full Name",     type: "text",  placeholder: "Enter your full name" },
-      { key: "date",  label: "Date",          type: "date",  placeholder: "" },
-      { key: "email", label: "Email Address", type: "email", placeholder: "e.g. name@example.com" },
-      { key: "phone", label: "Phone Number",  type: "tel",   placeholder: "e.g. 03001234567" },
+      { key: "name",            label: "Full Name",       type: "text",   placeholder: "Enter your full name" },
+      { key: "date",            label: "Date",            type: "date",   placeholder: "" },
+      { key: "email",           label: "Email Address",   type: "email",  placeholder: "e.g. name@example.com" },
+      { key: "phone",           label: "Phone Number",    type: "tel",    placeholder: "e.g. 03001234567" },
+      { key: "clinicLocation",  label: "Clinic Location", type: "select", placeholder: "", required: true,
+        options: ["Westland", "Hamtramck", "Roseville"] },
     ],
   },
 

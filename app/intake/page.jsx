@@ -172,6 +172,10 @@ export default function IntakePage() {
                 style={{ fontFamily: "'Source Sans 3', sans-serif" }}>
                 Your intake form has been submitted successfully.
               </p>
+              <p className="text-slate-500 text-base leading-relaxed max-w-sm mb-8"
+                style={{ fontFamily: "'Source Sans 3', sans-serif" }}>
+                Can't find this email? Please check your spam or junk folder.
+              </p>
 
               {/* Buttons */}
               <div className="flex flex-col sm:flex-row items-center gap-3 mb-4">

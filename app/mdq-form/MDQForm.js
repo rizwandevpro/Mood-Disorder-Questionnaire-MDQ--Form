@@ -132,66 +132,109 @@ function YesNoBtn({ value, selected, onClick }) {
 
 // Validation rules — required fields + per-field validators
 const FIELD_RULES = {
-  name:  { required: true,  validator: (v) => v.trim().length < 2 ? "Please enter your full name" : null },
-  date:  { required: true,  validator: (v) => !v ? "Please select a date" : null },
-  email: { required: false, validator: (v) => {
+  name:          { required: true,  validator: (v) => v.trim().length < 2 ? "Please enter your full name" : null },
+  date:          { required: true,  validator: (v) => !v ? "Please select a date" : null },
+  email:         { required: false, validator: (v) => {
     if (!v || !v.trim()) return null;
     return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v.trim()) ? null : "Please enter a valid email address";
   }},
-  phone: { required: true,  validator: (v) => {
+  phone:         { required: true,  validator: (v) => {
     const digits = v.replace(/[\s\-().+]/g, "");
     if (!digits) return "Please enter your phone number";
     if (!/^\d+$/.test(digits)) return "Phone number must contain only digits";
     if (digits.length < 7 || digits.length > 15) return "Please enter a valid phone number (7–15 digits)";
     return null;
   }},
+  clinicLocation: { required: true, validator: (v) => !v ? "Please select a clinic location" : null },
 };
 
 function StepInfo({ step, answers, onChange, errors }) {
   const fields = step.fields;
-  const pairs  = [[fields[0], fields[1]], [fields[2], fields[3]]];
+
+  const renderField = (f) => {
+    const err      = errors?.[f.key];
+    const required = FIELD_RULES[f.key]?.required ?? f.required;
+
+    const labelEl = (
+      <label
+        className="block text-[10px] font-bold uppercase tracking-widest mb-2"
+        style={{ color: err ? "#dc2626" : "#94a3b8", fontFamily: "'Source Sans 3', sans-serif" }}
+      >
+        {f.label}
+        {required  && <span style={{ color: "#7d4f50" }}> *</span>}
+        {!required && <span className="normal-case tracking-normal font-normal text-slate-400"> (optional)</span>}
+      </label>
+    );
+
+    const errEl = err ? (
+      <p className="mt-1.5 text-xs text-red-500 flex items-center gap-1" style={{ fontFamily: "'Source Sans 3', sans-serif" }}>
+        <svg className="w-3 h-3 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+          <path fillRule="evenodd" d="M18 10A8 8 0 11 2 10a8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
+        </svg>
+        {err}
+      </p>
+    ) : null;
+
+    if (f.type === "select") {
+      return (
+        <div key={f.key}>
+          {labelEl}
+          <select
+            value={answers[f.key] || ""}
+            onChange={(e) => onChange(f.key, e.target.value)}
+            className="w-full border-2 rounded-xl px-4 py-3 text-slate-800 bg-slate-50 focus:outline-none focus:ring-2 focus:ring-blue-300 text-base transition"
+            style={{
+              fontFamily:  "'Source Sans 3', sans-serif",
+              borderColor: err ? "#dc2626" : "#e2e8f0",
+              color:       answers[f.key] ? "#1e293b" : "#94a3b8",
+              cursor:      "pointer",
+            }}
+            onFocus={e => e.target.style.borderColor = err ? "#dc2626" : "#3b82f6"}
+            onBlur={e  => e.target.style.borderColor = err ? "#dc2626" : "#e2e8f0"}
+          >
+            <option value="" disabled>Select a location…</option>
+            {(f.options || []).map(opt => (
+              <option key={opt} value={opt}>{opt}</option>
+            ))}
+          </select>
+          {errEl}
+        </div>
+      );
+    }
+
+    return (
+      <div key={f.key}>
+        {labelEl}
+        <input
+          type={f.type}
+          inputMode={f.type === "tel" ? "numeric" : undefined}
+          value={answers[f.key] || ""}
+          onChange={(e) => onChange(f.key, e.target.value)}
+          placeholder={f.placeholder}
+          className="w-full border-2 rounded-xl px-4 py-3 text-slate-800 bg-slate-50 focus:outline-none focus:ring-2 focus:ring-blue-300 text-base transition placeholder-slate-300"
+          style={{
+            fontFamily:  "'Source Sans 3', sans-serif",
+            borderColor: err ? "#dc2626" : "#e2e8f0",
+          }}
+          onFocus={e => e.target.style.borderColor = err ? "#dc2626" : "#3b82f6"}
+          onBlur={e  => e.target.style.borderColor = err ? "#dc2626" : "#e2e8f0"}
+        />
+        {errEl}
+      </div>
+    );
+  };
+
+  // Pair fields into rows of 2, last field full-width if odd count
+  const rows = [];
+  for (let i = 0; i < fields.length; i += 2) {
+    rows.push(fields.slice(i, i + 2));
+  }
+
   return (
     <div className="space-y-5">
-      {pairs.map((pair, pi) => (
-        <div key={pi} className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          {pair.map((f) => {
-            const err      = errors?.[f.key];
-            const required = FIELD_RULES[f.key]?.required;
-            return (
-              <div key={f.key}>
-                <label
-                  className="block text-[10px] font-bold uppercase tracking-widest mb-2"
-                  style={{ color: err ? "#dc2626" : "#94a3b8", fontFamily: "'Source Sans 3', sans-serif" }}
-                >
-                  {f.label}
-                  {required && <span style={{ color: "#7d4f50" }}> *</span>}
-                  {!required && <span className="normal-case tracking-normal font-normal text-slate-400"> (optional)</span>}
-                </label>
-                <input
-                  type={f.type}
-                  inputMode={f.type === "tel" ? "numeric" : undefined}
-                  value={answers[f.key] || ""}
-                  onChange={(e) => onChange(f.key, e.target.value)}
-                  placeholder={f.placeholder}
-                  className="w-full border-2 rounded-xl px-4 py-3 text-slate-800 bg-slate-50 focus:outline-none focus:ring-2 focus:ring-blue-300 text-base transition placeholder-slate-300"
-                  style={{
-                    fontFamily: "'Source Sans 3', sans-serif",
-                    borderColor: err ? "#dc2626" : "#e2e8f0",
-                  }}
-                  onFocus={e => e.target.style.borderColor = err ? "#dc2626" : "#3b82f6"}
-                  onBlur={e  => e.target.style.borderColor = err ? "#dc2626" : "#e2e8f0"}
-                />
-                {err && (
-                  <p className="mt-1.5 text-xs text-red-500 flex items-center gap-1" style={{ fontFamily: "'Source Sans 3', sans-serif" }}>
-                    <svg className="w-3 h-3 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
-                      <path fillRule="evenodd" d="M18 10A8 8 0 11 2 10a8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
-                    </svg>
-                    {err}
-                  </p>
-                )}
-              </div>
-            );
-          })}
+      {rows.map((pair, pi) => (
+        <div key={pi} className={`grid gap-4 ${pair.length === 1 ? "grid-cols-1" : "grid-cols-1 sm:grid-cols-2"}`}>
+          {pair.map(f => renderField(f))}
         </div>
       ))}
     </div>

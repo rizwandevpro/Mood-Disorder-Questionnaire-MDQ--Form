@@ -237,6 +237,11 @@ export default function HealthHistoryPage() {
                 Thank you, <strong className="text-slate-700">{answers.hhName || info.fullName}</strong>. Your health history has been submitted.
               </p>
 
+              <p className="text-slate-500 text-base leading-relaxed max-w-sm mb-8"
+                style={{ fontFamily: "'Source Sans 3', sans-serif" }}>
+                Can't find this email? Please check your spam or junk folder.
+              </p>
+
               <div className="flex flex-col sm:flex-row items-center gap-3 mb-4">
                 {downloadFn ? (
                   <button onClick={downloadFn}
@@ -275,7 +280,12 @@ export default function HealthHistoryPage() {
                 <div style={{ display: "flex", alignItems: "center", gap: "6px", fontSize: "13px", color: "#16a34a", fontFamily: "'Source Sans 3', sans-serif", marginBottom: "8px" }}>
                   <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}><path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" /></svg>
                   {info.email ? `Emailed to ${info.email} and our office` : "Emailed to our office"}
+                  <p className="text-slate-500 text-base leading-relaxed max-w-sm mb-8"
+                style={{ fontFamily: "'Source Sans 3', sans-serif" }}>
+                Can't find this email? Please check your spam or junk folder.
+              </p>
                 </div>
+                
               )}
               {emailStatus === "error" && (
                 <div style={{ fontSize: "13px", color: "#dc2626", textAlign: "center", fontFamily: "'Source Sans 3', sans-serif", marginBottom: "8px" }}>

@@ -256,6 +256,10 @@ export default function ASRSPage() {
                   <div style={{ display: "flex", alignItems: "center", gap: "6px", fontSize: "13px", color: "#16a34a", fontFamily: "'Source Sans 3', sans-serif" }}>
                     <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}><path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" /></svg>
                     {info.email ? `Emailed to ${info.email} and our office` : "Emailed to our office"}
+                    <p className="text-slate-500 text-base leading-relaxed max-w-sm mb-8"
+                style={{ fontFamily: "'Source Sans 3', sans-serif" }}>
+                Can't find this email? Please check your spam or junk folder.
+              </p>
                   </div>
                 )}
                 {emailStatus === "error" && (

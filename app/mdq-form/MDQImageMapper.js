@@ -137,10 +137,11 @@ export default function MDQImageMapper({ answers, silentMode = false, onPdfReady
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           pdfBase64,
-          patientName:  answers.name  || "",
-          patientEmail: answers.email || "",
-          patientDate:  answers.date  || "",
-          patientPhone: answers.phone || "",
+          patientName:     answers.name            || "",
+          patientEmail:    answers.email           || "",
+          patientDate:     answers.date            || "",
+          patientPhone:    answers.phone           || "",
+          clinicLocation:  answers.clinicLocation  || "",
         }),
       });
       if (!res.ok) throw new Error((await res.json()).error || "Server error");
