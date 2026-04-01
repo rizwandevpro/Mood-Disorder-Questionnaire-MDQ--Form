@@ -14,7 +14,7 @@
 //   x, y = top-left corner of the checkbox square on the form image
 // ─────────────────────────────────────────────────────────────────────────────
 
-import { useRef, useCallback, useState, useEffect } from "react";
+import { useRef, useCallback, useState } from "react";
 
 const P1W = 1584; const P1H = 2244;
 const P2W = 1585; const P2H = 2244;
@@ -353,8 +353,6 @@ function wrapText(ctx, text, maxWidth, fontSize) {
 export default function HealthHistoryImageMapper({ answers, silentMode = false, onPdfReady }) {
   const canvas1Ref = useRef(null);
   const canvas2Ref = useRef(null);
-  const dataUrl1Ref = useRef(null);
-  const dataUrl2Ref = useRef(null);
   const [status, setStatus] = useState("loading");
 
   const drawBothPages = useCallback(() => {
@@ -380,86 +378,84 @@ export default function HealthHistoryImageMapper({ answers, silentMode = false, 
       loaded++;
       if (loaded < 2) return;
 
-      // Draw page 1
       ctx1.drawImage(bg1, 0, 0, P1W, P1H);
       drawPage1(ctx1, answers);
-
-      // Draw page 2 — handle async signature
       ctx2.drawImage(bg2, 0, 0, P2W, P2H);
       drawPage2(ctx2, answers);
+
+      // ── GAD7 pattern: build PDF right inside draw callback ──
+      const buildAndDeliver = () => {
+        if (silentMode && onPdfReady) {
+          const d1 = c1.toDataURL("image/jpeg", 0.7);
+          const d2 = c2.toDataURL("image/jpeg", 0.7);
+          import("jspdf").then(({ jsPDF }) => {
+            const pdf = new jsPDF({ orientation: "portrait", unit: "mm", format: "a4" });
+            pdf.addImage(d1, "JPEG", 0, 0, 210, 297);
+            pdf.addPage();
+            pdf.addImage(d2, "JPEG", 0, 0, 210, 297);
+            const blob = pdf.output("blob");
+            const url  = URL.createObjectURL(blob);
+            onPdfReady(() => {
+              const a = document.createElement("a");
+              a.href = url;
+              a.download = `HealthHistory_${answers.hhName || "patient"}.pdf`;
+              a.click();
+            }, blob);
+          });
+        }
+        setStatus("ready");
+      };
 
       if (answers.hhSignature) {
         const sigImg = new window.Image();
         sigImg.crossOrigin = "anonymous";
         sigImg.onload = () => {
-          const sw = 500, sh = 60;
-          ctx2.drawImage(sigImg, 275, 2069 - sh, sw, sh);
-          dataUrl1Ref.current = canvas1Ref.current.toDataURL("image/jpeg", 0.7);
-          dataUrl2Ref.current = canvas2Ref.current.toDataURL("image/jpeg", 0.7);
-          setStatus("ready");
+          ctx2.drawImage(sigImg, 275, 2069 - 60, 500, 60);
+          buildAndDeliver();
         };
+        sigImg.onerror = () => buildAndDeliver();
         sigImg.src = answers.hhSignature;
       } else {
-        dataUrl1Ref.current = canvas1Ref.current.toDataURL("image/jpeg", 0.7);
-        dataUrl2Ref.current = canvas2Ref.current.toDataURL("image/jpeg", 0.7);
-        setStatus("ready");
+        buildAndDeliver();
       }
     };
 
     bg1.onload = onBothLoaded;
     bg2.onload = onBothLoaded;
-    bg1.onerror = () => { ctx1.fillStyle="#fff"; ctx1.fillRect(0,0,P1W,P1H); ctx1.fillStyle="#374151"; ctx1.font="bold 28px Arial"; ctx1.fillText("⚠ Place patient-health-history-page-1.jpg in /public",40,80); drawPage1(ctx1,answers); setStatus("ready"); };
-    bg2.onerror = () => { ctx2.fillStyle="#fff"; ctx2.fillRect(0,0,P2W,P2H); ctx2.fillStyle="#374151"; ctx2.font="bold 28px Arial"; ctx2.fillText("⚠ Place patient-health-history-page-2.jpg in /public",40,80); drawPage2(ctx2,answers); setStatus("ready"); };
-  }, [answers]);
+    bg1.onerror = () => {
+      ctx1.fillStyle="#fff"; ctx1.fillRect(0,0,P1W,P1H);
+      ctx1.fillStyle="#374151"; ctx1.font="bold 28px Arial";
+      ctx1.fillText("⚠ Place patient-health-history-page-1.jpg in /public",40,80);
+      drawPage1(ctx1,answers); loaded++; if (loaded >= 2) onBothLoaded();
+    };
+    bg2.onerror = () => {
+      ctx2.fillStyle="#fff"; ctx2.fillRect(0,0,P2W,P2H);
+      ctx2.fillStyle="#374151"; ctx2.font="bold 28px Arial";
+      ctx2.fillText("⚠ Place patient-health-history-page-2.jpg in /public",40,80);
+      drawPage2(ctx2,answers); loaded++; if (loaded >= 2) onBothLoaded();
+    };
+  }, [answers, silentMode, onPdfReady]);
 
+  // Both canvases must be mounted before drawing
   const refCallback1 = useCallback(node => {
-    if (node) {
-      canvas1Ref.current = node;
-      // Only draw if canvas2 is already mounted too
-      if (canvas2Ref.current) drawBothPages();
-    }
+    if (node) { canvas1Ref.current = node; if (canvas2Ref.current) drawBothPages(); }
   }, [drawBothPages]);
-
   const refCallback2 = useCallback(node => {
-    if (node) {
-      canvas2Ref.current = node;
-      // Only draw if canvas1 is already mounted too
-      if (canvas1Ref.current) drawBothPages();
-    }
+    if (node) { canvas2Ref.current = node; if (canvas1Ref.current) drawBothPages(); }
   }, [drawBothPages]);
 
-  // ── PDF ───────────────────────────────────────────────────────────────────
-  const buildPdf = async () => {
-    const { jsPDF } = await import("jspdf");
-    const pdf  = new jsPDF({ orientation: "portrait", unit: "mm", format: "a4" });
-    const img1 = dataUrl1Ref.current;
-    const img2 = dataUrl2Ref.current;
-    if (img1) pdf.addImage(img1, "JPEG", 0, 0, 210, 297);
-    if (img2) { pdf.addPage(); pdf.addImage(img2, "JPEG", 0, 0, 210, 297); }
-    return pdf;
-  };
-
+  // Download button handler (non-silent mode)
   const handleDownload = async () => {
     try {
-      const pdf = await buildPdf();
+      const { jsPDF } = await import("jspdf");
+      const pdf = new jsPDF({ orientation: "portrait", unit: "mm", format: "a4" });
+      const img1 = canvas1Ref.current?.toDataURL("image/jpeg", 0.7);
+      const img2 = canvas2Ref.current?.toDataURL("image/jpeg", 0.7);
+      if (img1) pdf.addImage(img1, "JPEG", 0, 0, 210, 297);
+      if (img2) { pdf.addPage(); pdf.addImage(img2, "JPEG", 0, 0, 210, 297); }
       pdf.save(`HealthHistory_${answers.hhName || "patient"}_${answers.hhTodayDate || "form"}.pdf`);
-    } catch (err) {
-      console.error("PDF failed:", err);
-    }
+    } catch (err) { console.error("PDF failed:", err); }
   };
-
-  // Silent mode
-  useEffect(() => {
-    if (!silentMode || status !== "ready") return;
-    (async () => {
-      try {
-        const pdf  = await buildPdf();
-        const blob = pdf.output("blob");
-        if (onPdfReady) onPdfReady(() => pdf.save(`HealthHistory_${answers.hhName || "patient"}.pdf`), blob);
-      } catch (err) { console.error("Silent PDF failed:", err); }
-    })();
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [silentMode, status]);
 
   if (silentMode) {
     return (
