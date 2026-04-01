@@ -108,6 +108,8 @@ export default function ASRSImageMapper({ answers, silentMode, onPdfReady }) {
       }
     };
 
+    bg1.crossOrigin = "anonymous";
+    bg2.crossOrigin = "anonymous";
     bg1.onload = tryBuild;
     bg2.onload = tryBuild;
     bg1.src = "/Adult-ADHD-Self-Report-Scale-Page-1.jpg";

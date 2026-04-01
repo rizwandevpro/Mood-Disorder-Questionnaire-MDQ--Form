@@ -220,6 +220,8 @@ export default function BrownImageMapper({ answers, silentMode, onPdfReady }) {
       }
     };
 
+    bg1.crossOrigin = "anonymous";
+    bg2.crossOrigin = "anonymous";
     bg1.onload = tryBuild;
     bg2.onload = tryBuild;
     bg1.src = "/brown-executive-scale-1.jpg";

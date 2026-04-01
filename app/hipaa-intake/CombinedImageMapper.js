@@ -117,6 +117,7 @@ function drawHipaaPage(canvas, answers) {
     ctx.clearRect(0, 0, HIPAA_W, HIPAA_H);
 
     const bg = new window.Image();
+    bg.crossOrigin = "anonymous";
     bg.onerror = () => reject(new Error("Failed to load HIPAA background"));
     bg.onload  = () => {
       ctx.drawImage(bg, 0, 0, HIPAA_W, HIPAA_H);
@@ -142,6 +143,7 @@ function drawHipaaPage(canvas, answers) {
       const sigData = answers.signatureData;
       if (sigData) {
         const sigImg = new window.Image();
+        sigImg.crossOrigin = "anonymous";
         sigImg.onload  = () => {
           ctx.drawImage(sigImg, HIPAA_SIG.x, HIPAA_SIG.y, HIPAA_SIG.w, HIPAA_SIG.h);
           resolve();
@@ -165,6 +167,7 @@ function drawIntakePage(canvas, answers) {
     canvas.height = INTAKE_H;
 
     const bg = new window.Image();
+    bg.crossOrigin = "anonymous";
     bg.onerror = () => reject(new Error("Failed to load Intake background"));
     bg.onload  = () => {
       ctx.drawImage(bg, 0, 0, INTAKE_W, INTAKE_H);
@@ -221,6 +224,7 @@ function drawIntakePage(canvas, answers) {
       // Signature image
       if (answers.signature) {
         const sigImg = new window.Image();
+        sigImg.crossOrigin = "anonymous";
         sigImg.onload = () => {
           const sp = INTAKE_POS.signature;
           ctx.drawImage(sigImg, sp.x, sp.y - sp.h, sp.w, sp.h);
