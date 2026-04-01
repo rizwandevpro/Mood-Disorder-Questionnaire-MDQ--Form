@@ -305,7 +305,7 @@ export default function BrownPage() {
                 <BrownImageMapper
                   answers={answers}
                   silentMode
-                  onPdfReady={fn => {
+                  onPdfReady={(fn, blob) => {
                     setDownloadFn(() => fn);
 
                     // Guard against double-fire
@@ -315,46 +315,34 @@ export default function BrownPage() {
                     // Auto-download
                     fn();
 
-                    // Auto-email
+                    // Auto-email using blob passed directly from mapper
                     setEmailStatus("sending");
                     const fileName = `${(info.fullName || "Patient").replace(/\s+/g, "_")}_Brown_Executive_Function_Scales.pdf`;
 
-                    const sendEmail = (blob) => {
-                      blob.arrayBuffer().then(buf => {
-                        const bytes = new Uint8Array(buf);
-                        let binary = "";
-                        const chunk = 8192;
-                        for (let i = 0; i < bytes.length; i += chunk)
-                          binary += String.fromCharCode(...bytes.subarray(i, i + chunk));
-                        return fetch("/api/send-forms", {
-                          method: "POST",
-                          headers: { "Content-Type": "application/json" },
-                          body: JSON.stringify({
-                            pdfBase64:    btoa(binary),
-                            patientEmail: info.email?.trim() || "",
-                            patientName:  info.fullName,
-                            patientPhone: info.phone || "",
-                            clinicLocation: info.location || "",
-                            fileName,
-                            formName: "Brown Executive Function/Attention Scales",
-                          }),
-                        });
+                    new Promise((resolve) => {
+                      const reader = new FileReader();
+                      reader.onload = () => resolve(reader.result.split(",")[1]);
+                      reader.readAsDataURL(blob);
+                    })
+                      .then(base64 => fetch("/api/send-forms", {
+                        method:  "POST",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify({
+                          pdfBase64:      base64,
+                          patientEmail:   info.email?.trim() || "",
+                          patientName:    info.fullName,
+                          patientPhone:   info.phone || "",
+                          clinicLocation: info.location || "",
+                          fileName,
+                          formName:       "Brown Executive Function/Attention Scales",
+                        }),
+                      }))
+                      .then(r => r.json())
+                      .then(data => {
+                        if (data.success) setEmailStatus("sent");
+                        else { console.error("Email error:", data.error); setEmailStatus("error"); }
                       })
-                        .then(r => r.json())
-                        .then(data => {
-                          if (data.success) setEmailStatus("sent");
-                          else { console.error("Email error:", data.error); setEmailStatus("error"); }
-                        })
-                        .catch(err => { console.error("Email failed:", err); setEmailStatus("error"); });
-                    };
-
-                    // Intercept URL.createObjectURL to grab blob for email
-                    const origCreate = URL.createObjectURL.bind(URL);
-                    URL.createObjectURL = (blob) => {
-                      URL.createObjectURL = origCreate;
-                      sendEmail(blob);
-                      return origCreate(blob);
-                    };
+                      .catch(err => { console.error("Email failed:", err); setEmailStatus("error"); });
                   }}
                 />
               </div>

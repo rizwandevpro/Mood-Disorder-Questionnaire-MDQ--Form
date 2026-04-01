@@ -132,7 +132,7 @@ export default function GAD7ImageMapper({ answers, silentMode, onPdfReady }) {
           onPdfReady(() => {
             const a = document.createElement("a");
             a.href = url; a.download = "GAD7-Anxiety-Screener.pdf"; a.click();
-          });
+          }, blob);
         });
       }
     };

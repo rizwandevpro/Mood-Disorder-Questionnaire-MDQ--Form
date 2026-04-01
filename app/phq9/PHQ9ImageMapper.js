@@ -164,7 +164,7 @@ export default function PHQ9ImageMapper({ answers, silentMode, onPdfReady }) {
           onPdfReady(() => {
             const a = document.createElement("a");
             a.href = url; a.download = "PHQ9-Depression-Screener.pdf"; a.click();
-          });
+          }, blob);
         });
       }
     };

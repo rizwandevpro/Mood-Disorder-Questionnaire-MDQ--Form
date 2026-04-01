@@ -215,7 +215,7 @@ export default function BrownImageMapper({ answers, silentMode, onPdfReady }) {
           onPdfReady(() => {
             const a = document.createElement("a");
             a.href = url; a.download = "Brown-Executive-Function-Scales.pdf"; a.click();
-          });
+          }, blob);
         });
       }
     };

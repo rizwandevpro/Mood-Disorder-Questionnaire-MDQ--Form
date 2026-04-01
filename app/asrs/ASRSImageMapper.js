@@ -103,7 +103,7 @@ export default function ASRSImageMapper({ answers, silentMode, onPdfReady }) {
           onPdfReady(() => {
             const a = document.createElement("a");
             a.href = url; a.download = "ASRS-ADHD-Screener.pdf"; a.click();
-          });
+          }, blob);
         });
       }
     };
