@@ -237,7 +237,7 @@ function drawIntakePage(canvas, answers) {
         resolve();
       }
     };
-    bg.src = "/intake-bg.png";
+    bg.src = "/intake-bg.jpg";
   });
 }
 
