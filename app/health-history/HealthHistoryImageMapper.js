@@ -368,8 +368,8 @@ export default function HealthHistoryImageMapper({ answers, silentMode = false, 
 
     const bg1 = new window.Image();
     const bg2 = new window.Image();
-    bg1.src = "/patient-health-history-page-1.png";
-    bg2.src = "/patient-health-history-page-2.png";
+    bg1.src = "/patient-health-history-page-1.jpg";
+    bg2.src = "/patient-health-history-page-2.jpg";
 
     let loaded = 0;
     const onBothLoaded = () => {
@@ -399,26 +399,17 @@ export default function HealthHistoryImageMapper({ answers, silentMode = false, 
 
     bg1.onload = onBothLoaded;
     bg2.onload = onBothLoaded;
-    bg1.onerror = () => { ctx1.fillStyle="#fff"; ctx1.fillRect(0,0,P1W,P1H); ctx1.fillStyle="#374151"; ctx1.font="bold 28px Arial"; ctx1.fillText("⚠ Place patient-health-history-page-1.png in /public",40,80); drawPage1(ctx1,answers); setStatus("ready"); };
-    bg2.onerror = () => { ctx2.fillStyle="#fff"; ctx2.fillRect(0,0,P2W,P2H); ctx2.fillStyle="#374151"; ctx2.font="bold 28px Arial"; ctx2.fillText("⚠ Place patient-health-history-page-2.png in /public",40,80); drawPage2(ctx2,answers); setStatus("ready"); };
+    bg1.onerror = () => { ctx1.fillStyle="#fff"; ctx1.fillRect(0,0,P1W,P1H); ctx1.fillStyle="#374151"; ctx1.font="bold 28px Arial"; ctx1.fillText("⚠ Place patient-health-history-page-1.jpg in /public",40,80); drawPage1(ctx1,answers); setStatus("ready"); };
+    bg2.onerror = () => { ctx2.fillStyle="#fff"; ctx2.fillRect(0,0,P2W,P2H); ctx2.fillStyle="#374151"; ctx2.font="bold 28px Arial"; ctx2.fillText("⚠ Place patient-health-history-page-2.jpg in /public",40,80); drawPage2(ctx2,answers); setStatus("ready"); };
   }, [answers]);
 
   const refCallback1 = useCallback(node => { if (node) { canvas1Ref.current = node; drawBothPages(); } }, [drawBothPages]);
   const refCallback2 = useCallback(node => { if (node) { canvas2Ref.current = node; } }, []);
 
   // ── PDF ───────────────────────────────────────────────────────────────────
-  const loadJsPDF = () => new Promise((resolve, reject) => {
-    if (window.jspdf) { resolve(window.jspdf.jsPDF); return; }
-    const s = document.createElement("script");
-    s.src = "https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js";
-    s.onload = () => resolve(window.jspdf.jsPDF);
-    s.onerror = () => reject(new Error("Failed to load jsPDF"));
-    document.head.appendChild(s);
-  });
-
   const buildPdf = async () => {
-    const JsPDF = await loadJsPDF();
-    const pdf   = new JsPDF({ orientation: "portrait", unit: "mm", format: "a4" });
+    const { jsPDF } = await import("jspdf");
+    const pdf   = new jsPDF({ orientation: "portrait", unit: "mm", format: "a4" });
     const img1  = canvas1Ref.current?.toDataURL("image/jpeg", 1.0);
     const img2  = canvas2Ref.current?.toDataURL("image/jpeg", 1.0);
     if (img1) pdf.addImage(img1, "JPEG", 0, 0, 210, 297);

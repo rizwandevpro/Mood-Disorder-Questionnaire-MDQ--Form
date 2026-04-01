@@ -101,7 +101,7 @@ export default function IntakeImageMapper({ answers, silentMode = false, onPdfRe
     ctx.scale(SCALE, SCALE);
 
     const bg = new window.Image();
-    bg.src = "/intake-bg.png";
+    bg.src = "/intake-bg.jpg";
 
     bg.onload = () => {
       ctx.drawImage(bg, 0, 0, CANVAS_W, CANVAS_H);
@@ -183,7 +183,7 @@ export default function IntakeImageMapper({ answers, silentMode = false, onPdfRe
       ctx.fillText("New Patient Intake Form", 40, 60);
       ctx.fillStyle = "#ef4444";
       ctx.font = "11px Arial";
-      ctx.fillText("⚠ Place intake-bg.png in /public to see the form background.", 40, 90);
+      ctx.fillText("⚠ Place intake-bg.jpg in /public to see the form background.", 40, 90);
       ctx.fillStyle = "#374151";
       ctx.font = "10px Arial";
       let y = 130;

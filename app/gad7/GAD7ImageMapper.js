@@ -3,7 +3,7 @@
 // ─────────────────────────────────────────────────────────────────────────────
 // GAD7ImageMapper.js
 //
-// Renders answers onto /public/gad-7-anxiety.png background, exports PDF.
+// Renders answers onto /public/gad-7-anxiety.jpg background, exports PDF.
 // Background: 1581 × 2244 px (assumed — adjust if different)
 //
 // Coordinate map (provided):
@@ -20,7 +20,7 @@ import { QUESTIONS, OPTIONS, DIFFICULTY_OPTIONS } from "./gad7Steps";
 
 const CANVAS_W = 1581;
 const CANVAS_H = 2244;
-const BG_SRC   = "/gad-7-anxiety.png";
+const BG_SRC   = "/gad-7-anxiety.jpg";
 const FONT     = "500 28px Arial, sans-serif";
 const BRAND    = "#7d4f50";
 const CHECK_SZ = 26; // checkbox square size

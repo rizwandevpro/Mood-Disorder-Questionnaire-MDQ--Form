@@ -2,7 +2,7 @@
 
 // ─────────────────────────────────────────────────────────────────────────────
 // PHQ9ImageMapper.js
-// Background: Patient-Health-Questionnaire-PHQ-9.png (assumed ~1700×2244)
+// Background: Patient-Health-Questionnaire-PHQ-9.jpg (assumed ~1700×2244)
 //
 // Q1–Q9: 4 options each [Not at all, Several days, More than half, Nearly every day]
 // Q coords provided — draws checkmark only (no border)
@@ -25,7 +25,7 @@ import { QUESTIONS, OPTIONS, DIFFICULTY_OPTIONS } from "./phq9Steps";
 
 const CANVAS_W = 1809;
 const CANVAS_H = 2352;
-const BG_SRC   = "/Patient-Health-Questionnaire-PHQ-9.png";
+const BG_SRC   = "/Patient-Health-Questionnaire-PHQ-9.jpg";
 const BRAND    = "#7d4f50";
 
 // Q1–Q9 option x positions: [Not at all, Several days, More than half, Nearly every day]

@@ -110,8 +110,8 @@ export default function ASRSImageMapper({ answers, silentMode, onPdfReady }) {
 
     bg1.onload = tryBuild;
     bg2.onload = tryBuild;
-    bg1.src = "/Adult-ADHD-Self-Report-Scale-Page-1.png";
-    bg2.src = "/Adult-ADHD-Self-Report-Scale-Page-2.png";
+    bg1.src = "/Adult-ADHD-Self-Report-Scale-Page-1.jpg";
+    bg2.src = "/Adult-ADHD-Self-Report-Scale-Page-2.jpg";
   }, [answers]);
 
   const canvasStyle = silentMode

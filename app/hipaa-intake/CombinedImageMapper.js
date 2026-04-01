@@ -152,7 +152,7 @@ function drawHipaaPage(canvas, answers) {
         resolve();
       }
     };
-    bg.src = "/HIPAA_Compliance_Patient_Consent_Form.png";
+    bg.src = "/HIPAA_Compliance_Patient_Consent_Form.jpg";
   });
 }
 

@@ -118,7 +118,7 @@ export default function HIPAAImageMapper({ answers, silentMode, onPdfReady }) {
       }
     };
 
-    bg.src = "/HIPAA_Compliance_Patient_Consent_Form.png";
+    bg.src = "/HIPAA_Compliance_Patient_Consent_Form.";
   }, []);  // Run once on mount — answers are captured via closure at mount time
 
   const hidden  = { display:"block", width:"1px", height:"1px" };

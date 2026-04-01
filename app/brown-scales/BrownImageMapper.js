@@ -222,8 +222,8 @@ export default function BrownImageMapper({ answers, silentMode, onPdfReady }) {
 
     bg1.onload = tryBuild;
     bg2.onload = tryBuild;
-    bg1.src = "/brown-executive-scale-1.png";
-    bg2.src = "/brown-executive-scale-2.png";
+    bg1.src = "/brown-executive-scale-1.jpg";
+    bg2.src = "/brown-executive-scale-2.jpg";
   }, [answers]);
 
   const hidden  = { display:"block", width:"1px", height:"1px" };
