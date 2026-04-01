@@ -368,6 +368,7 @@ export default function HealthHistoryImageMapper({ answers, silentMode = false, 
 
     const bg1 = new window.Image();
     const bg2 = new window.Image();
+    
     bg1.src = "/patient-health-history-page-1.jpg";
     bg2.src = "/patient-health-history-page-2.jpg";
 
