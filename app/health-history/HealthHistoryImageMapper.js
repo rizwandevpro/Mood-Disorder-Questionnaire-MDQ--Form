@@ -353,6 +353,8 @@ function wrapText(ctx, text, maxWidth, fontSize) {
 export default function HealthHistoryImageMapper({ answers, silentMode = false, onPdfReady }) {
   const canvas1Ref = useRef(null);
   const canvas2Ref = useRef(null);
+  const dataUrl1Ref = useRef(null);
+  const dataUrl2Ref = useRef(null);
   const [status, setStatus] = useState("loading");
 
   const drawBothPages = useCallback(() => {
@@ -368,7 +370,8 @@ export default function HealthHistoryImageMapper({ answers, silentMode = false, 
 
     const bg1 = new window.Image();
     const bg2 = new window.Image();
-    
+    bg1.crossOrigin = "anonymous";
+    bg2.crossOrigin = "anonymous";
     bg1.src = "/patient-health-history-page-1.jpg";
     bg2.src = "/patient-health-history-page-2.jpg";
 
@@ -387,13 +390,18 @@ export default function HealthHistoryImageMapper({ answers, silentMode = false, 
 
       if (answers.hhSignature) {
         const sigImg = new window.Image();
+        sigImg.crossOrigin = "anonymous";
         sigImg.onload = () => {
           const sw = 500, sh = 60;
           ctx2.drawImage(sigImg, 275, 2069 - sh, sw, sh);
+          dataUrl1Ref.current = canvas1Ref.current.toDataURL("image/jpeg", 0.7);
+          dataUrl2Ref.current = canvas2Ref.current.toDataURL("image/jpeg", 0.7);
           setStatus("ready");
         };
         sigImg.src = answers.hhSignature;
       } else {
+        dataUrl1Ref.current = canvas1Ref.current.toDataURL("image/jpeg", 0.7);
+        dataUrl2Ref.current = canvas2Ref.current.toDataURL("image/jpeg", 0.7);
         setStatus("ready");
       }
     };
@@ -423,9 +431,9 @@ export default function HealthHistoryImageMapper({ answers, silentMode = false, 
   // ── PDF ───────────────────────────────────────────────────────────────────
   const buildPdf = async () => {
     const { jsPDF } = await import("jspdf");
-    const pdf   = new jsPDF({ orientation: "portrait", unit: "mm", format: "a4" });
-    const img1  = canvas1Ref.current?.toDataURL("image/jpeg", 0.7);
-    const img2  = canvas2Ref.current?.toDataURL("image/jpeg", 0.7);
+    const pdf  = new jsPDF({ orientation: "portrait", unit: "mm", format: "a4" });
+    const img1 = dataUrl1Ref.current;
+    const img2 = dataUrl2Ref.current;
     if (img1) pdf.addImage(img1, "JPEG", 0, 0, 210, 297);
     if (img2) { pdf.addPage(); pdf.addImage(img2, "JPEG", 0, 0, 210, 297); }
     return pdf;
