@@ -404,8 +404,21 @@ export default function HealthHistoryImageMapper({ answers, silentMode = false, 
     bg2.onerror = () => { ctx2.fillStyle="#fff"; ctx2.fillRect(0,0,P2W,P2H); ctx2.fillStyle="#374151"; ctx2.font="bold 28px Arial"; ctx2.fillText("⚠ Place patient-health-history-page-2.jpg in /public",40,80); drawPage2(ctx2,answers); setStatus("ready"); };
   }, [answers]);
 
-  const refCallback1 = useCallback(node => { if (node) { canvas1Ref.current = node; drawBothPages(); } }, [drawBothPages]);
-  const refCallback2 = useCallback(node => { if (node) { canvas2Ref.current = node; } }, []);
+  const refCallback1 = useCallback(node => {
+    if (node) {
+      canvas1Ref.current = node;
+      // Only draw if canvas2 is already mounted too
+      if (canvas2Ref.current) drawBothPages();
+    }
+  }, [drawBothPages]);
+
+  const refCallback2 = useCallback(node => {
+    if (node) {
+      canvas2Ref.current = node;
+      // Only draw if canvas1 is already mounted too
+      if (canvas1Ref.current) drawBothPages();
+    }
+  }, [drawBothPages]);
 
   // ── PDF ───────────────────────────────────────────────────────────────────
   const buildPdf = async () => {
