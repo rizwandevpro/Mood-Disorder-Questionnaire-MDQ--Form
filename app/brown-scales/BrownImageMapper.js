@@ -201,8 +201,8 @@ export default function BrownImageMapper({ answers, silentMode, onPdfReady }) {
       renderRows(ctx2, P2_ROWS, answers);
 
       if (silentMode && onPdfReady) {
-        const d1 = canvas1Ref.current.toDataURL("image/jpeg", 1.0);
-        const d2 = canvas2Ref.current.toDataURL("image/jpeg", 1.0);
+        const d1 = canvas1Ref.current.toDataURL("image/jpeg", 0.7);
+        const d2 = canvas2Ref.current.toDataURL("image/jpeg", 0.7);
         import("jspdf").then(({ jsPDF }) => {
           const W1 = P1_W * 0.5, H1 = P1_H * 0.5;
           const W2 = P2_W * 0.5, H2 = P2_H * 0.5;

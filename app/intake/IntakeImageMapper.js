@@ -218,7 +218,7 @@ export default function IntakeImageMapper({ answers, silentMode = false, onPdfRe
     const canvas = canvasRef.current;
     if (!canvas) return null;
     const JsPDF   = await loadJsPDF();
-    const imgData = canvas.toDataURL("image/jpeg", 1.0); // max quality — canvas is 3x so file size is fine
+    const imgData = canvas.toDataURL("image/jpeg", 0.7); // max quality — canvas is 3x so file size is fine
     const pdf = new JsPDF({ orientation: "portrait", unit: "mm", format: "a4" });
     pdf.addImage(imgData, "JPEG", 0, 0, 210, 297);
     return pdf;

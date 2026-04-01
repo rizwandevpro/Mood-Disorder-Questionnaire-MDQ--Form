@@ -410,8 +410,8 @@ export default function HealthHistoryImageMapper({ answers, silentMode = false, 
   const buildPdf = async () => {
     const { jsPDF } = await import("jspdf");
     const pdf   = new jsPDF({ orientation: "portrait", unit: "mm", format: "a4" });
-    const img1  = canvas1Ref.current?.toDataURL("image/jpeg", 1.0);
-    const img2  = canvas2Ref.current?.toDataURL("image/jpeg", 1.0);
+    const img1  = canvas1Ref.current?.toDataURL("image/jpeg", 0.7);
+    const img2  = canvas2Ref.current?.toDataURL("image/jpeg", 0.7);
     if (img1) pdf.addImage(img1, "JPEG", 0, 0, 210, 297);
     if (img2) { pdf.addPage(); pdf.addImage(img2, "JPEG", 0, 0, 210, 297); }
     return pdf;

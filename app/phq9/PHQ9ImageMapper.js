@@ -154,7 +154,7 @@ export default function PHQ9ImageMapper({ answers, silentMode, onPdfReady }) {
 
       // ── PDF export ──
       if (silentMode && onPdfReady) {
-        const dataUrl = canvas.toDataURL("image/jpeg", 1.0);
+        const dataUrl = canvas.toDataURL("image/jpeg", 0.7);
         import("jspdf").then(({ jsPDF }) => {
           const W = CANVAS_W * 0.5, H = CANVAS_H * 0.5;
           const pdf = new jsPDF({ orientation:"portrait", unit:"pt", format:[W, H] });

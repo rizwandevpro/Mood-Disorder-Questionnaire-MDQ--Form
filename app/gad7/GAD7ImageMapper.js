@@ -123,7 +123,7 @@ export default function GAD7ImageMapper({ answers, silentMode, onPdfReady }) {
 
       // ── Build PDF if silent ──
       if (silentMode && onPdfReady) {
-        const dataUrl = canvas.toDataURL("image/jpeg", 1.0);
+        const dataUrl = canvas.toDataURL("image/jpeg", 0.7);
         import("jspdf").then(({ jsPDF }) => {
           const pdf = new jsPDF({ orientation:"portrait", unit:"pt", format:[CANVAS_W * 0.5, CANVAS_H * 0.5] });
           pdf.addImage(dataUrl, "JPEG", 0, 0, CANVAS_W * 0.5, CANVAS_H * 0.5);

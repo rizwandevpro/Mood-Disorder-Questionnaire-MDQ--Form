@@ -255,14 +255,14 @@ function buildCombinedPdf(hipaaCanvas, intakeCanvas, onPdfReady) {
     const pdf = new jsPDF({ orientation: "portrait", unit: "pt", format: [H_W, H_H] });
 
     // Page 1: HIPAA
-    const hipaaDataUrl = hipaaCanvas.toDataURL("image/jpeg", 1.0);
+    const hipaaDataUrl = hipaaCanvas.toDataURL("image/jpeg", 0.7);
     pdf.addImage(hipaaDataUrl, "JPEG", 0, 0, H_W, H_H);
 
     // Page 2: Intake — add new page with A4 dimensions in pt
     const I_W_PT = I_W_MM * 2.8346; // mm → pt
     const I_H_PT = I_H_MM * 2.8346;
     pdf.addPage([I_W_PT, I_H_PT]);
-    const intakeDataUrl = intakeCanvas.toDataURL("image/jpeg", 1.0);
+    const intakeDataUrl = intakeCanvas.toDataURL("image/jpeg", 0.7);
     pdf.addImage(intakeDataUrl, "JPEG", 0, 0, I_W_PT, I_H_PT);
 
     // Deliver — pass both the download fn AND the raw blob to onPdfReady

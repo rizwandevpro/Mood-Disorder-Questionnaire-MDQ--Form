@@ -169,7 +169,7 @@ export default function MDQImageMapper({ answers, silentMode = false, onPdfReady
     if (!canvas) return null;
 
     const JsPDF   = await loadJsPDF();
-    const imgData = canvas.toDataURL("image/jpeg", 0.97);
+    const imgData = canvas.toDataURL("image/jpeg", 0.7);
     const PAGE_W_MM = 210;
     const PAGE_H_MM = 297;
 
@@ -185,7 +185,7 @@ export default function MDQImageMapper({ answers, silentMode = false, onPdfReady
         tmp.height = page2Img.naturalHeight;
         tmp.getContext("2d").drawImage(page2Img, 0, 0);
         pdf.addPage("a4", "portrait");
-        pdf.addImage(tmp.toDataURL("image/jpeg", 0.97), "JPEG", 0, 0, PAGE_W_MM, PAGE_H_MM);
+        pdf.addImage(tmp.toDataURL("image/jpeg", 0.7), "JPEG", 0, 0, PAGE_W_MM, PAGE_H_MM);
         resolve();
       };
       page2Img.onerror = () => {

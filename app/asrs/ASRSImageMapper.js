@@ -88,8 +88,8 @@ export default function ASRSImageMapper({ answers, silentMode, onPdfReady }) {
       renderPage(ctx2, bg2, answers, 2);
 
       if (silentMode && onPdfReady) {
-        const d1 = canvas1Ref.current.toDataURL("image/jpeg", 1.0);
-        const d2 = canvas2Ref.current.toDataURL("image/jpeg", 1.0);
+        const d1 = canvas1Ref.current.toDataURL("image/jpeg", 0.7);
+        const d2 = canvas2Ref.current.toDataURL("image/jpeg", 0.7);
 
         import("jspdf").then(({ jsPDF }) => {
           const W1 = PAGE1_W * 0.5, H1 = PAGE1_H * 0.5;
