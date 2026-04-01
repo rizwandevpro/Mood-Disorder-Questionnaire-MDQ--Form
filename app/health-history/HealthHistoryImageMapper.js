@@ -371,7 +371,7 @@ export default function HealthHistoryImageMapper({ answers, silentMode = false, 
     bg1.crossOrigin = "anonymous";
     bg2.crossOrigin = "anonymous";
     bg1.src = "/patient-health-history-page-1.jpg";
-    bg2.src = "/patient-health-history-page-2.jpg";
+    bg2.src = "/Patient-health-history-page-2.jpg";
 
     let loaded = 0;
     const onBothLoaded = () => {
