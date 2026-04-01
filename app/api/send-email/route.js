@@ -1,70 +1,41 @@
-// ─────────────────────────────────────────────────────────────────────────────
-// app/api/send-email/route.js
+// app/api/send-email/route.js  (MDQ form)
 //
-// Receives the generated PDF (base64) from the client and sends it to:
-//   1. A hardcoded clinic email  (CLINIC_EMAIL below)
-//   2. The patient's email       (collected from the form)
+// Receives the generated PDF (base64) from MDQImageMapper and sends via Resend.
+// Works on Vercel (no SMTP port blocking).
 //
-// SETUP — add these to your .env.local file:
-//   SMTP_HOST=smtp.gmail.com
-//   SMTP_PORT=587
-//   SMTP_USER=your-gmail@gmail.com
-//   SMTP_PASS=your-app-password        ← Gmail App Password, NOT your login password
-//   SMTP_FROM=your-gmail@gmail.com     ← shown as the "From" address
-//
-// Gmail App Password:
-//   Google Account → Security → 2-Step Verification → App Passwords → generate one
-//
-// Install Nodemailer:
-//   npm install nodemailer
-// ─────────────────────────────────────────────────────────────────────────────
+// Required .env variables:
+//   RESEND_API_KEY   ← from resend.com dashboard
 
-import nodemailer from "nodemailer";
+import { Resend } from "resend";
 
-// ── Hardcoded clinic recipient — change this to any address ──────────────────
-const CLINIC_EMAIL = "reports@cambridgemich.com";
-
-// ── Nodemailer transporter — reads credentials from .env.local ───────────────
-const transporter = nodemailer.createTransport({
-  host:   process.env.SMTP_HOST,
-  port:   Number(process.env.SMTP_PORT) || 587,
-  secure: false, // true for port 465, false for 587
-  auth: {
-    user: process.env.SMTP_USER,
-    pass: process.env.SMTP_PASS,
-  },
-});
+const resend       = new Resend(process.env.RESEND_API_KEY);
+const CLINIC_EMAIL = process.env.CLINIC_EMAIL || "reports@cambridgemich.com";
+const FROM_FORMS   = "Cambridge Psychiatry Forms <hello@therizwan.online>";
+const FROM_REPLY   = "Cambridge Psychiatry <hello@therizwan.online>";
 
 export async function POST(request) {
   try {
     const body = await request.json();
 
-    // ── Destructure payload sent from MDQImageMapper ─────────────────────────
     const {
-      pdfBase64,       // the full PDF as a base64 string (no data: prefix)
-      patientName,     // answers.name
-      patientEmail,    // answers.email — patient recipient
-      patientDate,     // answers.date
-      patientPhone,    // answers.phone — included in email body for reference
-      clinicLocation,  // answers.clinicLocation
+      pdfBase64,
+      patientName,
+      patientEmail,
+      patientDate,
+      patientPhone,
+      clinicLocation,
     } = body;
     const displayLocation = clinicLocation || "";
 
-    // ── Validate required fields ──────────────────────────────────────────────
     if (!pdfBase64) {
       return Response.json({ error: "Missing pdfBase64" }, { status: 400 });
     }
 
-    // ── Build the PDF attachment ──────────────────────────────────────────────
     const filename   = `MDQ_${patientName || "result"}_${patientDate || "form"}.pdf`;
-    const attachment = {
-      filename,
-      content:     pdfBase64,
-      encoding:    "base64",
-      contentType: "application/pdf",
-    };
+    const pdfBuffer  = Buffer.from(pdfBase64, "base64");
+    const attachment = { filename, content: pdfBuffer };
 
-    // ── Email body ────────────────────────────────────────────────────────────
+    // ── Clinic email HTML ────────────────────────────────────────────────────
     const clinicHtml = `
       <div style="font-family:Arial,sans-serif;max-width:520px;margin:0 auto;color:#1e293b;">
         <div style="background:#7d4f50;padding:20px 24px;border-radius:8px 8px 0 0;">
@@ -90,6 +61,7 @@ export async function POST(request) {
         </div>
       </div>`;
 
+    // ── Patient email HTML ───────────────────────────────────────────────────
     const patientHtml = `
       <div style="font-family:Arial,sans-serif;max-width:520px;margin:0 auto;color:#1e293b;">
         <div style="background:#7d4f50;padding:20px 24px;border-radius:8px 8px 0 0;">
@@ -115,32 +87,38 @@ export async function POST(request) {
             </table>
           </div>
           <p style="margin:0 0 12px;font-size:14px;">Please bring a copy of your insurance card to your first appointment.</p>
-          <p style="margin:0;font-size:13px;color:#94a3b8;">
+          <p style="margin:0 0 12px;font-size:13px;color:#94a3b8;">
             This questionnaire is not a substitute for a full medical evaluation.
             An accurate diagnosis can only be made by a qualified doctor.
           </p>
+          <p style="margin:0;font-size:12px;color:#cbd5e1;">Can't find this email? Please check your spam or junk folder.</p>
         </div>
       </div>`;
 
-    // ── Send to clinic ────────────────────────────────────────────────────────
-    await transporter.sendMail({
-      from:        `"Cambridge Psychiatry Forms" <${process.env.SMTP_FROM}>`,
-      to:          CLINIC_EMAIL,
-      subject:     `New Patient Forms — ${displayLocation ? displayLocation + " — " : ""}Mood Disorder Questionnaire (MDQ) — ${patientName || "Patient"}`,
-      html:        clinicHtml,
-      attachments: [attachment],
-    });
-
-    // ── Send to patient (only if email provided) ──────────────────────────────
-    if (patientEmail) {
-      await transporter.sendMail({
-        from:        `"Cambridge Psychiatry" <${process.env.SMTP_FROM}>`,
-        to:          patientEmail,
-        subject:     `Your Cambridge Psychiatry Mood Disorder Questionnaire (MDQ)${displayLocation ? " — " + displayLocation : ""} — Submission Confirmed`,
-        html:        patientHtml,
+    // ── Send both ────────────────────────────────────────────────────────────
+    const sends = [
+      resend.emails.send({
+        from:        FROM_FORMS,
+        to:          CLINIC_EMAIL,
+        subject:     `New Patient Forms — ${displayLocation ? displayLocation + " — " : ""}Mood Disorder Questionnaire (MDQ) — ${patientName || "Patient"}`,
+        html:        clinicHtml,
         attachments: [attachment],
-      });
+      }),
+    ];
+
+    if (patientEmail) {
+      sends.push(
+        resend.emails.send({
+          from:        FROM_REPLY,
+          to:          patientEmail,
+          subject:     `Your Cambridge Psychiatry Mood Disorder Questionnaire (MDQ)${displayLocation ? " — " + displayLocation : ""} — Submission Confirmed`,
+          html:        patientHtml,
+          attachments: [attachment],
+        })
+      );
     }
+
+    await Promise.all(sends);
 
     return Response.json({ success: true });
 
