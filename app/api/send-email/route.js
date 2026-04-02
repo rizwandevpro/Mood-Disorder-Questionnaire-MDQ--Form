@@ -10,8 +10,8 @@ import { Resend } from "resend";
 
 const resend       = new Resend(process.env.RESEND_API_KEY);
 const CLINIC_EMAIL = process.env.CLINIC_EMAIL || "reports@cambridgemich.com";
-const FROM_FORMS   = "Cambridge Psychiatry Forms <hello@therizwan.online>";
-const FROM_REPLY   = "Cambridge Psychiatry <hello@therizwan.online>";
+const FROM_FORMS   = "Cambridge Psychiatry Forms <reports@cambridgemich.com>";
+const FROM_REPLY   = "Cambridge Psychiatry <reports@cambridgemich.com>";
 
 export async function POST(request) {
   try {
