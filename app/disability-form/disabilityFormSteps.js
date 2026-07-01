@@ -1,5 +1,5 @@
 // ─────────────────────────────────────────────────────────────────────────────
-// quickConsentSteps.js — data for the Cancellation & No-Show Policy form
+// disabilityFormSteps.js — data for the Documentation and Form Completion Fees form
 //
 // STEP STRUCTURE (3 steps):
 //   Step 0 — consent    (title + policy text + email field)
@@ -7,38 +7,42 @@
 //   Step 2 — thankyou
 // ─────────────────────────────────────────────────────────────────────────────
 
-export const FORM_TITLE     = "Cancellation & No-Show Policy";
-export const EFFECTIVE_DATE = "(Effective July 1st, 2026)";
+export const FORM_TITLE     = "Documentation and Form Completion Fees";
+export const EFFECTIVE_DATE = "";
 
 export const INTRO_PARAGRAPHS = [
-  "At Cambridge Psychiatry and Behavioral Institute, our goal is to provide quality care to all our patients in a timely manner. No-shows and late cancellations inconvenience those patients who need access to medical care.",
-  "We understand that circumstances arise that may prevent you from keeping your appointment; however, we kindly ask for your cooperation with our policy.",
+  "At Cambridge Psychiatry and Behavioral Institute, our primary focus is providing you with the highest quality of clinical care. Due to the significant time, administrative resources, and detailed medical review required to accurately complete legal and insurance documentation, we are implementing a standard processing fee for all specialized paperwork.",
+  "A fee of $50 will be charged for the preparation, completion, and submission of the following forms:",
 ];
 
 export const SECTIONS = [
   {
-    heading: "Policy Guidelines",
+    heading: "Covered Forms",
+    items: [
+      { text: "Family and Medical Leave Act (FMLA) paperwork" },
+      { text: "Short-Term Disability (STD) forms" },
+      { text: "Long-Term Disability (LTD) forms" },
+      { text: "Any other specialized employer or insurance disability documentation" },
+    ],
+  },
+  {
+    heading: "Policy Details",
     items: [
       {
-        bold: "24-Hour Notice Required:",
-        text: "If you need to cancel or reschedule your appointment, please notify us at least 24 hours in advance.",
+        bold: "Payment Due:",
+        text: "The $50 fee is per documentation, updates, or recertifications are required to maintain your claim. This fee must be paid prior to the completion and release of the paperwork to you, your employer, or your insurance carrier.",
       },
       {
-        bold: "Late Cancellations & No-Shows:",
-        text: "If you cancel your appointment with less than 24 hours' notice, or if you miss your scheduled appointment entirely (No-Show), a $50.00 fee will be charged to your account.",
-      },
-      {
-        bold: "How to Cancel:",
-        text: "You can cancel or reschedule your appointment by calling our office or through our patient portal. If you reach our voicemail, please leave a detailed message.",
+        bold: "Turnaround Time:",
+        text: "Please allow up to 7  business days from the date of payment for our office to complete and submit the forms.",
       },
     ],
   },
   {
-    heading: "Important Notes",
+    heading: "Additional Information",
     items: [
-      { text: "Cancellation fees are not covered by insurance providers and will be the sole responsibility of the patient." },
-      { text: "This fee must be paid prior to scheduling or attending your next appointment." },
-      { text: "We understand that true emergencies happen. A one-time waiver may be considered at the discretion of management for extraordinary circumstances." },
+      { text: "We appreciate your understanding and cooperation as we implement this policy to ensure our administrative team can continue to support your healthcare needs efficiently." },
+      { text: "If you have any questions regarding this policy, please do not hesitate to speak with our front desk or billing coordinator." },
     ],
   },
 ];

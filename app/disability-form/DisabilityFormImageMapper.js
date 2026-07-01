@@ -6,8 +6,8 @@ const CANVAS_W = 1500;
 const CANVAS_H = 1941;
 
 const FIELDS = {
-  patientInitials: { x: 390, y: 1682 },
-  sigDate:         { x: 760, y: 1682 },
+  patientInitials: { x: 390, y: 1625 },
+  sigDate:         { x: 765, y: 1625 },
 };
 
 function drawText(ctx, text, x, y, fontSize) {
@@ -68,7 +68,7 @@ export default function DisabilityFormImageMapper({ answers, silentMode, onPdfRe
       if (silentMode && onPdfReady) buildPdf(canvas, onPdfReady);
     };
 
-    bg.src = "/cancellation-no-show-policy.jpg";
+    bg.src = "/disability-form.jpg";
   }, []);  // Run once on mount — answers are captured via closure at mount time
 
   const hidden  = { display:"block", width:"1px", height:"1px" };

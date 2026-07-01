@@ -58,9 +58,20 @@ function StepConsent({ answers, onChange, onNext }) {
       {/* Policy text */}
       <div style={{ padding: "24px 28px", borderBottom: "1px solid #f1f5f9" }}>
         <div style={{ fontSize: "15px", color: "#374151", lineHeight: 1.75, fontFamily: "'Source Sans 3', sans-serif" }}>
+          
+
           {INTRO_PARAGRAPHS.map((p, i) => (
-            <p key={i} style={{ marginTop: i === 0 ? 0 : undefined }}>{p}</p>
-          ))}
+              <p key={i} style={{ marginTop: i === 0 ? 0 : undefined }}>
+                {p.includes("$50")
+                  ? p.split("$50").map((part, index, arr) => (
+                      <span key={index}>
+                        {part}
+                        {index < arr.length - 1 && <strong>$50</strong>}
+                      </span>
+                    ))
+                  : p}
+              </p>
+            ))}
 
           {SECTIONS.map((section, si) => (
             <div key={si} style={{ marginTop: "20px" }}>
