@@ -195,7 +195,7 @@ export default function DisabilityFormPage() {
                             pdfBase64:    base64,
                             patientEmail: patientEmail,
                             patientName,
-                            fileName:     "Disability-Form.pdf",
+                            fileName:     "Documentation and Form Completion Fees.pdf",
                             formName:     FORM_TITLE,
                           }),
                         });
