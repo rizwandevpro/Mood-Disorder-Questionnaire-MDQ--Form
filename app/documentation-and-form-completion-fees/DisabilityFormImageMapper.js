@@ -38,7 +38,7 @@ function buildPdf(canvas, onPdfReady) {
     onPdfReady(() => {
       const a = document.createElement("a");
       a.href = url;
-      a.download = "Disability-Form.pdf";
+      a.download = "Documentation and Form Completion Fees.pdf";
       a.click();
     }, blob);
   }).catch(err => console.error("jsPDF error:", err));
