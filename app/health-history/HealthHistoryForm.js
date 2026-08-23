@@ -203,7 +203,7 @@ function StepConditions({ answers, onChange }) {
     "Heart attack","Hepatitis","Herpes","High blood pressure","HIV positive",
     "Kidney disease","Liver disease","Multiple sclerosis","Pacemaker","Pneumonia",
     "Prostate problem","Psychiatric care","Rheumatic fever","Rhinitis",
-    "Sexually Transmitted Infection","Stroke","Suicide attempt","Thyroid problem",
+    "Sexually Transmitted", "Infection","Stroke","Suicide attempt","Thyroid problem",
     "Tuberculosis","Ulcer(s)","Vaginal infections",
   ];
   const ckey = c => "cond_" + c.replace(/[^a-zA-Z0-9]/g,"_");
