@@ -12,8 +12,8 @@ import { PDFDocument }  from "pdf-lib";
 import { Resend }       from "resend";
 
 const CLINIC_EMAIL = process.env.CLINIC_EMAIL || "reports@cambridgemich.com";
-const FROM_FORMS   = "Cambridge Psychiatry Forms <hello@therizwan.online>";
-const FROM_REPLY   = "Cambridge Psychiatry <hello@therizwan.online>";
+const FROM_FORMS   = "Cambridge Psychiatry Forms <reports@cambridgemich.com>";
+const FROM_REPLY   = "Cambridge Psychiatry <reports@cambridgemich.com>";
 
 // Extend Vercel timeout — merging 6 large PDFs needs time
 export const maxDuration = 60;
