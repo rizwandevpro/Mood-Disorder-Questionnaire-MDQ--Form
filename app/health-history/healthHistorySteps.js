@@ -24,7 +24,7 @@ export const CONDITIONS = [
   // col 4
   "HIV positive","Kidney disease","Liver disease","Multiple sclerosis","Pacemaker","Pneumonia","Prostate problem","Psychiatric care","Rheumatic fever",
   // col 5
-  "Rhinitis","Sexually Transmitted","Infection","Stroke","Suicide attempt","Thyroid problem","Tuberculosis","Ulcer(s)","Vaginal infections",
+  "Rhinitis","Sexually Transmitted Infection","Stroke","Suicide attempt","Thyroid problem","Tuberculosis","Ulcer(s)","Vaginal infections",
 ];
 
 export const FAMILY_DISEASES = [
