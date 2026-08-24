@@ -194,7 +194,7 @@ function StepHealthMaint({ answers, onChange }) {
 }
 
 // ── Step 2: Conditions ────────────────────────────────────────────────────────
-function StepConditions({ answers, onChange }) {
+function StepConditions({ answers, onChange, errors }) {
   const ALL_CONDITIONS = [
     "AIDS","Alcoholism","Anemia","Anorexia","Anxiety","Arthritis","Asthma",
     "Bleeding Disorder","Breast Lump","Bronchitis","Bulimia","CAD / heart disease",
@@ -203,7 +203,7 @@ function StepConditions({ answers, onChange }) {
     "Heart attack","Hepatitis","Herpes","High blood pressure","HIV positive",
     "Kidney disease","Liver disease","Multiple sclerosis","Pacemaker","Pneumonia",
     "Prostate problem","Psychiatric care","Rheumatic fever","Rhinitis",
-    "Sexually Transmitted", "Infection","Stroke","Suicide attempt","Thyroid problem",
+    "Sexually Transmitted Infection","Stroke","Suicide attempt","Thyroid problem",
     "Tuberculosis","Ulcer(s)","Vaginal infections",
   ];
   const ckey = c => "cond_" + c.replace(/[^a-zA-Z0-9]/g,"_");
@@ -281,7 +281,7 @@ function AllergyCheckRow({ label, checked, onToggle }) {
 }
 
 // ── Step 3: Allergies & Medications ──────────────────────────────────────────
-function StepAllergiesMeds({ answers, onChange }) {
+function StepAllergiesMeds({ answers, onChange, errors }) {
   return (
     <div style={{display:"flex",flexDirection:"column",gap:"24px"}}>
       <div>
@@ -290,19 +290,23 @@ function StepAllergiesMeds({ answers, onChange }) {
           <AllergyCheckRow label="No known allergies" checked={!!answers.allergyNone} onToggle={()=>{onChange("allergyNone",!answers.allergyNone);if(!answers.allergyNone)onChange("allergyYes",false);}} />
           <AllergyCheckRow label="Yes, I have the following allergies:" checked={!!answers.allergyYes} onToggle={()=>{onChange("allergyYes",!answers.allergyYes);if(!answers.allergyYes)onChange("allergyNone",false);}} />
           {answers.allergyYes && (
-            <textarea value={answers.allergyList||""} onChange={e=>onChange("allergyList",e.target.value)}
-              placeholder="List all known allergies to medications or substances…" rows={3}
-              style={{...inputStyle(false,false),resize:"vertical"}} />
+            <div>
+              <textarea value={answers.allergyList||""} onChange={e=>onChange("allergyList",e.target.value)}
+                placeholder="List all known allergies to medications or substances…" rows={3}
+                style={{...inputStyle(!!errors?.allergyList,false),resize:"vertical"}} />
+              {errors?.allergyList && <p style={{fontSize:"12px",color:"#dc2626",marginTop:"4px",fontFamily:"'Source Sans 3', sans-serif"}}>⚠ {errors.allergyList}</p>}
+            </div>
           )}
         </div>
       </div>
       {divider()}
       <div>
-        {sectionTitle("Medications")}
+        {sectionTitle("Medications *")}
         <p style={{fontSize:"13px",color:"#94a3b8",marginBottom:"8px",fontFamily:"'Source Sans 3', sans-serif"}}>List all medications including dose and frequency.</p>
         <textarea value={answers.medications||""} onChange={e=>onChange("medications",e.target.value)}
           placeholder="Medication name — dose — frequency…" rows={5}
-          style={{...inputStyle(false,false),resize:"vertical"}} />
+          style={{...inputStyle(!!errors?.medications,false),resize:"vertical"}} />
+        {errors?.medications && <p style={{fontSize:"12px",color:"#dc2626",marginTop:"4px",fontFamily:"'Source Sans 3', sans-serif"}}>⚠ {errors.medications}</p>}
       </div>
     </div>
   );
@@ -339,59 +343,72 @@ function HabitRow({ label, children }) {
   );
 }
 
-function StepHealthHabits({ answers, onChange }) {
+function StepHealthHabits({ answers, onChange, errors }) {
   const note = t => <span style={{fontSize:"12px",color:"#94a3b8",fontFamily:"'Source Sans 3', sans-serif",whiteSpace:"nowrap"}}>{t}</span>;
+  const errNote = key => errors?.[key] && <span style={{fontSize:"11px",color:"#dc2626",fontWeight:600,fontFamily:"'Source Sans 3', sans-serif",whiteSpace:"nowrap"}}>⚠ {errors[key]}</span>;
+  const habitLabel = (text, key) => (
+    <span style={{fontSize:"14px",fontWeight:700,color: errors?.[key] ? "#dc2626" : "#374151",fontFamily:"'Source Sans 3', sans-serif"}}>
+      {text}<span style={{color:BRAND}}> *</span>
+    </span>
+  );
 
   return (
     <div style={{backgroundColor:"white",borderRadius:"12px",border:"1px solid #f1f5f9",padding:"0 4px"}}>
-      <HabitRow label="Caffeine">
+      <HabitRow label={habitLabel("Caffeine","habCaffeine")}>
         <HabitSmallCheck label="Uses" checked={!!answers.habCaffeineUse} onToggle={()=>onChange("habCaffeineUse",!answers.habCaffeineUse)} />
         <HabitSmallCheck label="None"  checked={!!answers.habCaffeineNone} onToggle={()=>{onChange("habCaffeineNone",!answers.habCaffeineNone);if(!answers.habCaffeineNone)onChange("habCaffeineUse",false);}} />
         <SmallInput fieldKey="habCaffeineDrinks" value={answers.habCaffeineDrinks} onChange={onChange} placeholder="Amount" />
         {note("drinks per")}
         <SmallInput fieldKey="habCaffeinePer" value={answers.habCaffeinePer} onChange={onChange} placeholder="Day/week" />
+        {errNote("habCaffeine")}
       </HabitRow>
-      <HabitRow label="Tobacco">
+      <HabitRow label={habitLabel("Tobacco","habTobacco")}>
         <HabitSmallCheck label="Uses" checked={!!answers.habTobaccoUse} onToggle={()=>onChange("habTobaccoUse",!answers.habTobaccoUse)} />
         <HabitSmallCheck label="None" checked={!!answers.habTobaccoNone} onToggle={()=>{onChange("habTobaccoNone",!answers.habTobaccoNone);if(!answers.habTobaccoNone)onChange("habTobaccoUse",false);}} />
         <SmallInput fieldKey="habTobaccoCigs" value={answers.habTobaccoCigs} onChange={onChange} placeholder="Amount" />
         {note("cigs/day")}
         <HabitSmallCheck label="Quit?" checked={!!answers.habTobaccoQuit} onToggle={()=>onChange("habTobaccoQuit",!answers.habTobaccoQuit)} />
         {answers.habTobaccoQuit && <SmallInput fieldKey="habTobaccoQuitDate" value={answers.habTobaccoQuitDate} onChange={onChange} placeholder="Around when?" width="130px" />}
+        {errNote("habTobacco")}
       </HabitRow>
-      <HabitRow label="Alcohol">
+      <HabitRow label={habitLabel("Alcohol","habAlcohol")}>
         <HabitSmallCheck label="Uses" checked={!!answers.habAlcoholUse} onToggle={()=>onChange("habAlcoholUse",!answers.habAlcoholUse)} />
         <HabitSmallCheck label="None" checked={!!answers.habAlcoholNone} onToggle={()=>{onChange("habAlcoholNone",!answers.habAlcoholNone);if(!answers.habAlcoholNone)onChange("habAlcoholUse",false);}} />
         <SmallInput fieldKey="habAlcoholDrinks" value={answers.habAlcoholDrinks} onChange={onChange} placeholder="Amount" />
         {note("drinks per")}
         <SmallInput fieldKey="habAlcoholPer" value={answers.habAlcoholPer} onChange={onChange} placeholder="Day/week" />
+        {errNote("habAlcohol")}
       </HabitRow>
-      <HabitRow label="Drugs">
+      <HabitRow label={habitLabel("Drugs","habDrugs")}>
         <HabitSmallCheck label="Uses" checked={!!answers.habDrugsUse} onToggle={()=>onChange("habDrugsUse",!answers.habDrugsUse)} />
         <HabitSmallCheck label="None" checked={!!answers.habDrugsNone} onToggle={()=>{onChange("habDrugsNone",!answers.habDrugsNone);if(!answers.habDrugsNone)onChange("habDrugsUse",false);}} />
         {note("Describe:")}
         <SmallInput fieldKey="habDrugsDesc" value={answers.habDrugsDesc} onChange={onChange} placeholder="Description" width="200px" />
+        {errNote("habDrugs")}
       </HabitRow>
-      <HabitRow label="Diet">
+      <HabitRow label={habitLabel("Diet","habDietDesc")}>
         <input type="text" value={answers.habDietDesc||""} onChange={e=>onChange("habDietDesc",e.target.value)}
           placeholder="Describe your diet…"
-          style={{flex:1,minWidth:"120px",border:"2px solid #e2e8f0",borderRadius:"8px",padding:"8px 10px",fontSize:"13px",fontWeight:500,color:"#1e293b",backgroundColor:"#f8fafc",outline:"none",fontFamily:"'Source Sans 3', sans-serif"}}
-          onFocus={e=>e.target.style.borderColor="#3b82f6"} onBlur={e=>e.target.style.borderColor="#e2e8f0"} />
+          style={{flex:1,minWidth:"120px",border:`2px solid ${errors?.habDietDesc?"#dc2626":"#e2e8f0"}`,borderRadius:"8px",padding:"8px 10px",fontSize:"13px",fontWeight:500,color:"#1e293b",backgroundColor:"#f8fafc",outline:"none",fontFamily:"'Source Sans 3', sans-serif"}}
+          onFocus={e=>e.target.style.borderColor="#3b82f6"} onBlur={e=>e.target.style.borderColor=errors?.habDietDesc?"#dc2626":"#e2e8f0"} />
+        {errNote("habDietDesc")}
       </HabitRow>
-      <HabitRow label="Exercise">
+      <HabitRow label={habitLabel("Exercise","habExerciseDesc")}>
         <input type="text" value={answers.habExerciseDesc||""} onChange={e=>onChange("habExerciseDesc",e.target.value)}
           placeholder="Describe your exercise…"
-          style={{flex:1,minWidth:"120px",border:"2px solid #e2e8f0",borderRadius:"8px",padding:"8px 10px",fontSize:"13px",fontWeight:500,color:"#1e293b",backgroundColor:"#f8fafc",outline:"none",fontFamily:"'Source Sans 3', sans-serif"}}
-          onFocus={e=>e.target.style.borderColor="#3b82f6"} onBlur={e=>e.target.style.borderColor="#e2e8f0"} />
+          style={{flex:1,minWidth:"120px",border:`2px solid ${errors?.habExerciseDesc?"#dc2626":"#e2e8f0"}`,borderRadius:"8px",padding:"8px 10px",fontSize:"13px",fontWeight:500,color:"#1e293b",backgroundColor:"#f8fafc",outline:"none",fontFamily:"'Source Sans 3', sans-serif"}}
+          onFocus={e=>e.target.style.borderColor="#3b82f6"} onBlur={e=>e.target.style.borderColor=errors?.habExerciseDesc?"#dc2626":"#e2e8f0"} />
+        {errNote("habExerciseDesc")}
       </HabitRow>
       <div className="hh-habit-row" style={{borderBottom:"none"}}>
         <div className="hh-habit-label">
-          <span style={{fontSize:"14px",fontWeight:700,color:"#374151",fontFamily:"'Source Sans 3', sans-serif"}}>Seatbelts</span>
+          {habitLabel("Seatbelts","habSeatbelt")}
         </div>
         <div className="hh-habit-controls">
           {["Always","Never","Sometimes"].map(v => (
             <HabitSmallCheck key={v} label={v} checked={answers.habSeatbelt===v} onToggle={()=>onChange("habSeatbelt",v)} />
           ))}
+          {errNote("habSeatbelt")}
         </div>
       </div>
     </div>
@@ -456,7 +473,7 @@ function StepSurgicalHistory({ answers, onChange }) {
 }
 
 // ── Step 6: Pregnancy & Other Hospitalizations ────────────────────────────────
-function StepPregnancyOther({ answers, onChange }) {
+function StepPregnancyOther({ answers, onChange, errors }) {
   const [childRows, setChildRows] = useState(answers.pregnancyChildRows||[{birthYear:"",mf:"",complications:""}]);
   const [hospRows,  setHospRows]  = useState(answers.otherHospRows||[{year:"",hospital:"",reason:""}]);
   useEffect(()=>onChange("pregnancyChildRows",childRows),[childRows]);
@@ -492,7 +509,9 @@ function StepPregnancyOther({ answers, onChange }) {
         ]} />
       {divider()}
       <div style={{display:"flex",flexWrap:"wrap",alignItems:"center",gap:"14px",paddingTop:"4px"}}>
-        <span style={{fontSize:"14px",color:"#374151",fontFamily:"'Source Sans 3', sans-serif",fontWeight:500}}>Have you ever had a blood transfusion?</span>
+        <span style={{fontSize:"14px",color: errors?.bloodTransfusion ? "#dc2626" : "#374151",fontFamily:"'Source Sans 3', sans-serif",fontWeight:500}}>
+          Have you ever had a blood transfusion?<span style={{color:BRAND}}> *</span>
+        </span>
         {["No","Yes"].map(v=>(
           <label key={v} style={{display:"flex",alignItems:"center",gap:"6px",cursor:"pointer",fontSize:"14px",color:"#374151",fontFamily:"'Source Sans 3', sans-serif"}}>
             <input type="radio" name="bloodTrans" value={v} checked={answers.bloodTransfusion===v} onChange={()=>onChange("bloodTransfusion",v)}
@@ -505,13 +524,14 @@ function StepPregnancyOther({ answers, onChange }) {
             placeholder="Date(s)"
             style={{border:"2px solid #e2e8f0",borderRadius:"8px",padding:"8px 12px",fontSize:"13px",fontWeight:500,width:"160px",fontFamily:"'Source Sans 3', sans-serif",outline:"none"}} />
         )}
+        {errors?.bloodTransfusion && <span style={{fontSize:"12px",color:"#dc2626",fontWeight:600,fontFamily:"'Source Sans 3', sans-serif"}}>⚠ {errors.bloodTransfusion}</span>}
       </div>
     </div>
   );
 }
 
 // ── Step 7: Family History ────────────────────────────────────────────────────
-function StepFamilyHistory({ answers, onChange }) {
+function StepFamilyHistory({ answers, onChange, errors }) {
   const members = [
     {key:"father",  label:"Father"},
     {key:"mother",  label:"Mother"},
@@ -687,10 +707,42 @@ function StepAdditional({ answers, onChange, errors }) {
 function validateHHStep(step, answers) {
   const errors = {};
   if (step.type==="fields") step.fields?.forEach(f=>{if(f.required&&!(answers[f.key]||"").toString().trim())errors[f.key]="Required";});
+
   if (step.type==="additional") {
     if (!answers.hhSignature) errors.hhSignature="Please provide your signature";
     if (!answers.hhSigDate)   errors.hhSigDate="Required";
   }
+
+  if (step.type==="conditions") {
+    const anyChecked = Object.keys(answers).some(k=>k.startsWith("cond_") && answers[k]);
+    if (!anyChecked) errors._step = "Please select at least one condition below (choose \"Other\" if none apply).";
+  }
+
+  if (step.type==="allergies") {
+    if (!answers.allergyNone && !answers.allergyYes) errors._step = "Please indicate whether you have any known allergies.";
+    if (answers.allergyYes && !(answers.allergyList||"").toString().trim()) errors.allergyList = "Please list your allergies.";
+    if (!(answers.medications||"").toString().trim()) errors.medications = "Please list current medications, or enter \"None\".";
+  }
+
+  if (step.type==="healthHabits") {
+    if (!answers.habCaffeineUse && !answers.habCaffeineNone) errors.habCaffeine = "Required";
+    if (!answers.habTobaccoUse  && !answers.habTobaccoNone)  errors.habTobacco  = "Required";
+    if (!answers.habAlcoholUse  && !answers.habAlcoholNone)  errors.habAlcohol  = "Required";
+    if (!answers.habDrugsUse    && !answers.habDrugsNone)    errors.habDrugs    = "Required";
+    if (!(answers.habDietDesc||"").toString().trim())        errors.habDietDesc = "Required";
+    if (!(answers.habExerciseDesc||"").toString().trim())    errors.habExerciseDesc = "Required";
+    if (!answers.habSeatbelt)                                errors.habSeatbelt = "Required";
+  }
+
+  if (step.type==="pregnancyOther") {
+    if (!answers.bloodTransfusion) errors.bloodTransfusion = "Required";
+  }
+
+  if (step.type==="familyHistory") {
+    const anyFamInfo = Object.keys(answers).some(k=>(k.startsWith("fam_")||k.startsWith("famDis_")) && answers[k] && answers[k].toString().trim());
+    if (!anyFamInfo) errors._step = "Please fill in at least one family member's information, or check at least one disease below.";
+  }
+
   return errors;
 }
 
@@ -706,12 +758,12 @@ function Card({ step, answers, onChange, onNext, onBack, isFirst, isLast }) {
     switch(step.type) {
       case "fields":          return <StepFields          step={step} answers={answers} onChange={handleChange} errors={errors} />;
       case "healthMaint":     return <StepHealthMaint     answers={answers} onChange={handleChange} />;
-      case "conditions":      return <StepConditions      answers={answers} onChange={handleChange} />;
-      case "allergies":       return <StepAllergiesMeds   answers={answers} onChange={handleChange} />;
-      case "healthHabits":    return <StepHealthHabits    answers={answers} onChange={handleChange} />;
+      case "conditions":      return <StepConditions      answers={answers} onChange={handleChange} errors={errors} />;
+      case "allergies":       return <StepAllergiesMeds   answers={answers} onChange={handleChange} errors={errors} />;
+      case "healthHabits":    return <StepHealthHabits    answers={answers} onChange={handleChange} errors={errors} />;
       case "surgicalHistory": return <StepSurgicalHistory answers={answers} onChange={handleChange} />;
-      case "pregnancyOther":  return <StepPregnancyOther  answers={answers} onChange={handleChange} />;
-      case "familyHistory":   return <StepFamilyHistory   answers={answers} onChange={handleChange} />;
+      case "pregnancyOther":  return <StepPregnancyOther  answers={answers} onChange={handleChange} errors={errors} />;
+      case "familyHistory":   return <StepFamilyHistory   answers={answers} onChange={handleChange} errors={errors} />;
       case "additional":      return <StepAdditional      answers={answers} onChange={handleChange} errors={errors} />;
       default: return null;
     }
@@ -723,7 +775,14 @@ function Card({ step, answers, onChange, onNext, onBack, isFirst, isLast }) {
         <h2 style={{fontSize:"22px",fontWeight:700,color:"#0f172a",marginBottom:"4px",fontFamily:"'Lora', Georgia, serif"}}>{step.title}</h2>
         <p  style={{fontSize:"14px",color:"#64748b",lineHeight:1.5,fontFamily:"'Source Sans 3', sans-serif"}}>{step.subtitle}</p>
       </div>
-      <div style={{padding:"28px 32px"}}>{renderContent()}</div>
+      <div style={{padding:"28px 32px"}}>
+        {errors._step && (
+          <div style={{marginBottom:"16px",padding:"10px 14px",borderRadius:"10px",backgroundColor:"#fef2f2",border:"1px solid #fecaca"}}>
+            <p style={{fontSize:"13px",color:"#dc2626",fontFamily:"'Source Sans 3', sans-serif",fontWeight:600}}>⚠ {errors._step}</p>
+          </div>
+        )}
+        {renderContent()}
+      </div>
       <div style={{padding:"20px 32px",backgroundColor:"#f8fafc",borderTop:"1px solid #f1f5f9",display:"flex",alignItems:"center",justifyContent:"space-between",gap:"16px"}}>
         <button type="button" onClick={onBack}
           style={{display:"flex",alignItems:"center",gap:"8px",padding:"12px 20px",borderRadius:"12px",fontSize:"14px",fontWeight:600,border:"2px solid #e2e8f0",color:"#475569",backgroundColor:"white",cursor:"pointer",fontFamily:"'Source Sans 3', sans-serif",visibility:isFirst?"hidden":"visible"}}
