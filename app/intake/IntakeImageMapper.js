@@ -1,5 +1,7 @@
 "use client";
 
+import { toUSDate } from "../utils/formatDate";
+
 // ─────────────────────────────────────────────────────────────────────────────
 // IntakeImageMapper.js
 //
@@ -117,7 +119,7 @@ export default function IntakeImageMapper({ answers, silentMode = false, onPdfRe
       t(answers.lastName,   POS.lastName.x,   POS.lastName.y,   320);
       t(answers.firstName,  POS.firstName.x,  POS.firstName.y,  290);
       t(answers.mi,         POS.mi.x,         POS.mi.y,           48);
-      t(answers.dob,        POS.dob.x,        POS.dob.y,          210);
+      t(toUSDate(answers.dob),        POS.dob.x,        POS.dob.y,          210);
       t(answers.gender,     POS.gender.x,     POS.gender.y,       146);
       t(answers.address,    POS.address.x,    POS.address.y,      425);
       t(answers.apt,        POS.apt.x,        POS.apt.y,          106);
@@ -148,14 +150,14 @@ export default function IntakeImageMapper({ answers, silentMode = false, onPdfRe
       t(answers.priProvider,     POS.priProvider.x,     POS.priProvider.y,     531);
       t(answers.priMemberId,     POS.priMemberId.x,     POS.priMemberId.y,     531);
       t(answers.priPolicyOwner,  POS.priPolicyOwner.x,  POS.priPolicyOwner.y,  531);
-      t(answers.priPolicyDob,    POS.priPolicyDob.x,    POS.priPolicyDob.y,    531);
+      t(toUSDate(answers.priPolicyDob),    POS.priPolicyDob.x,    POS.priPolicyDob.y,    531);
       t(answers.priRelationship, POS.priRelationship.x, POS.priRelationship.y, 531);
 
       // Secondary Insurance
       t(answers.secProvider,     POS.secProvider.x,     POS.secProvider.y,     531);
       t(answers.secMemberId,     POS.secMemberId.x,     POS.secMemberId.y,     531);
       t(answers.secPolicyOwner,  POS.secPolicyOwner.x,  POS.secPolicyOwner.y,  531);
-      t(answers.secPolicyDob,    POS.secPolicyDob.x,    POS.secPolicyDob.y,    531);
+      t(toUSDate(answers.secPolicyDob),    POS.secPolicyDob.x,    POS.secPolicyDob.y,    531);
       t(answers.secRelationship, POS.secRelationship.x, POS.secRelationship.y, 531);
 
       // Signature image
@@ -164,12 +166,12 @@ export default function IntakeImageMapper({ answers, silentMode = false, onPdfRe
         sigImg.onload = () => {
           const sp = POS.signature;
           ctx.drawImage(sigImg, sp.x, sp.y - sp.h, sp.w, sp.h);
-          t(answers.sigDate, POS.sigDate.x, POS.sigDate.y, 266);
+          t(toUSDate(answers.sigDate), POS.sigDate.x, POS.sigDate.y, 266);
           setStatus("ready");
         };
         sigImg.src = answers.signature;
       } else {
-        t(answers.sigDate, POS.sigDate.x, POS.sigDate.y, 100);
+        t(toUSDate(answers.sigDate), POS.sigDate.x, POS.sigDate.y, 100);
         setStatus("ready");
       }
     };
@@ -189,7 +191,7 @@ export default function IntakeImageMapper({ answers, silentMode = false, onPdfRe
       let y = 130;
       const fields = [
         ["Last Name", answers.lastName], ["First Name", answers.firstName],
-        ["DOB", answers.dob], ["Gender", answers.gender],
+        ["DOB", toUSDate(answers.dob)], ["Gender", answers.gender],
         ["Address", answers.address], ["City", answers.city],
         ["Cell", answers.cellPhone], ["Email", answers.email],
       ];

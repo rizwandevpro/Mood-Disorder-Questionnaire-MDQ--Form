@@ -4,7 +4,8 @@
 // app/patient-forms/page.js   →   route: /patient-forms
 //
 // Unified sequential flow through 7 forms:
-//   Stage "info"  → Global Patient Info (name, phone, email, location)
+//   Stage "info"  → Global Patient Info (GlobalInfoStep.js), prefilled into
+//                   every form via prefill.js
 //   Stage 0–6     → HIPAA+Intake, Health History, GAD-7, ASRS, PHQ-9, Brown,
 //                   Cancellation & No-Show Policy
 //   Stage "done"  → All PDFs merged → one download + one email
@@ -18,6 +19,9 @@
 
 import { useState, useRef, useCallback, useEffect } from "react";
 import Image from "next/image";
+
+import GlobalInfoStep from "./GlobalInfoStep";
+import { INITIAL_INFO, buildFullName, withPrefill } from "./prefill";
 
 // ── Form components ───────────────────────────────────────────────────────────
 import HIPAAForm           from "../hipaa-intake/HIPAAForm";
@@ -90,101 +94,6 @@ const MIN_STEP = (formId) => INITIAL_STEPS[formId];
 const HIPAA_STEPS              = 2;   // globalStep 0–1 = HIPAAForm
 const HIPAA_INTAKE_THANKYOU    = 9;   // globalStep 9 = done
 
-// ── Patient info step ─────────────────────────────────────────────────────────
-function GlobalInfoStep({ info, onChange, onNext }) {
-  const [errors, setErrors] = useState({});
-
-  const validate = () => {
-    const e = {};
-    if (!info.fullName?.trim()) e.fullName = "Full name is required.";
-    if (!info.phone?.trim())    e.phone    = "Phone number is required.";
-    if (info.email?.trim() && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(info.email.trim()))
-                                e.email    = "Please enter a valid email.";
-    if (!info.location)         e.location = "Please select a clinic location.";
-    return e;
-  };
-
-  const handleNext = () => {
-    const e = validate();
-    if (Object.keys(e).length) { setErrors(e); return; }
-    onNext();
-  };
-
-  const field = (key, label, type, placeholder, required) => (
-    <div style={{ marginBottom: "20px" }}>
-      <label style={{ display: "block", fontSize: "13px", fontWeight: 700, color: "#374151", marginBottom: "6px", fontFamily: "'Source Sans 3', sans-serif", textTransform: "uppercase", letterSpacing: "0.06em" }}>
-        {label}{required && <span style={{ color: "#dc2626", marginLeft: "3px" }}>*</span>}
-        {!required && <span style={{ color: "#94a3b8", fontWeight: 400, fontSize: "11px", marginLeft: "6px", textTransform: "none" }}>(optional)</span>}
-      </label>
-      <input
-        type={type}
-        value={info[key] || ""}
-        placeholder={placeholder}
-        onChange={e => { onChange(key, e.target.value); setErrors(prev => ({ ...prev, [key]: "" })); }}
-        style={{ width: "100%", padding: "12px 14px", borderRadius: "10px", border: `1.5px solid ${errors[key] ? "#dc2626" : "#e2e8f0"}`, fontSize: "15px", fontFamily: "'Source Sans 3', sans-serif", color: "#1e293b", outline: "none", boxSizing: "border-box", backgroundColor: "white" }}
-      />
-      {errors[key] && <p style={{ fontSize: "12px", color: "#dc2626", marginTop: "4px", fontFamily: "'Source Sans 3', sans-serif" }}>{errors[key]}</p>}
-    </div>
-  );
-
-  return (
-    <div style={{ maxWidth: "560px", margin: "0 auto" }}>
-      {/* Form list */}
-      <div style={{ backgroundColor: "white", borderRadius: "16px", padding: "20px 24px", border: "1px solid #e2e8f0", marginBottom: "24px" }}>
-        <p style={{ fontSize: "11px", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.08em", color: "#94a3b8", marginBottom: "14px", fontFamily: "'Source Sans 3', sans-serif" }}>
-          You will complete {TOTAL_FORMS} forms in sequence
-        </p>
-        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "8px" }}>
-          {FORMS.map((f, i) => (
-            <div key={f.id} style={{ display: "flex", alignItems: "center", gap: "8px", padding: "8px 12px", borderRadius: "8px", backgroundColor: "#f8fafc", border: "1px solid #f1f5f9" }}>
-              <span style={{ fontSize: "16px" }}>{f.icon}</span>
-              <p style={{ fontSize: "11px", fontWeight: 700, color: "#374151", margin: 0, fontFamily: "'Source Sans 3', sans-serif" }}>{i + 1}. {f.label}</p>
-            </div>
-          ))}
-        </div>
-      </div>
-
-      {/* Info form */}
-      <div style={{ backgroundColor: "white", borderRadius: "20px", padding: "32px 28px", boxShadow: "0 4px 24px rgba(0,0,0,0.07)", border: "1px solid #e2e8f0" }}>
-        <h2 style={{ fontSize: "22px", fontWeight: 700, color: "#0f172a", fontFamily: "'Lora', serif", marginBottom: "6px" }}>Before We Begin</h2>
-        <p style={{ fontSize: "14px", color: "#64748b", fontFamily: "'Source Sans 3', sans-serif", lineHeight: 1.6, marginBottom: "24px" }}>
-          Please provide your contact information. This will be shared across all {TOTAL_FORMS} forms — you won't need to enter it again.
-        </p>
-
-        {field("fullName", "Full Name",    "text",  "e.g. Jane Smith",       true)}
-        {field("phone",    "Phone Number", "tel",   "e.g. (555) 123-4567",   true)}
-        {field("email",    "Email Address","email", "e.g. jane@example.com", false)}
-
-        <div style={{ marginBottom: "24px" }}>
-          <label style={{ display: "block", fontSize: "13px", fontWeight: 700, color: "#374151", marginBottom: "6px", fontFamily: "'Source Sans 3', sans-serif", textTransform: "uppercase", letterSpacing: "0.06em" }}>
-            Clinic Location<span style={{ color: "#dc2626", marginLeft: "3px" }}>*</span>
-          </label>
-          <select
-            value={info.location || ""}
-            onChange={e => { onChange("location", e.target.value); setErrors(prev => ({ ...prev, location: "" })); }}
-            style={{ width: "100%", padding: "12px 14px", borderRadius: "10px", border: `1.5px solid ${errors.location ? "#dc2626" : "#e2e8f0"}`, fontSize: "15px", fontFamily: "'Source Sans 3', sans-serif", color: info.location ? "#1e293b" : "#94a3b8", outline: "none", boxSizing: "border-box", backgroundColor: "white", cursor: "pointer" }}
-          >
-            <option value="" disabled>Select a location…</option>
-            <option value="Westland">Westland</option>
-            <option value="Hamtramck">Hamtramck</option>
-            <option value="Roseville">Roseville</option>
-          </select>
-          {errors.location && <p style={{ fontSize: "12px", color: "#dc2626", marginTop: "4px", fontFamily: "'Source Sans 3', sans-serif" }}>{errors.location}</p>}
-        </div>
-
-        <button
-          onClick={handleNext}
-          style={{ width: "100%", padding: "14px", borderRadius: "12px", fontSize: "15px", fontWeight: 700, border: "none", color: "white", backgroundColor: "#7d4f50", cursor: "pointer", fontFamily: "'Source Sans 3', sans-serif" }}
-          onMouseEnter={e => e.currentTarget.style.backgroundColor = "#6a4142"}
-          onMouseLeave={e => e.currentTarget.style.backgroundColor = "#7d4f50"}
-        >
-          Begin Forms →
-        </button>
-      </div>
-    </div>
-  );
-}
-
 // ── Transition banner ─────────────────────────────────────────────────────────
 function TransitionBanner({ completedIndex, nextForm }) {
   return (
@@ -248,8 +157,8 @@ function SilentMapper({ formId, answers, info, onPdfReady }) {
 // ── Main page ─────────────────────────────────────────────────────────────────
 export default function PatientFormsPage() {
   const [stage,        setStage]        = useState("info");
-  const [info,         setInfo]         = useState({ fullName: "", phone: "", email: "", location: "" });
-  const infoRef = useRef({ fullName: "", phone: "", email: "", location: "" }); // always fresh
+  const [info,         setInfo]         = useState(INITIAL_INFO);
+  const infoRef = useRef(INITIAL_INFO); // always fresh
   const [showTransition, setShowTransition] = useState(false);
   const [transitionIdx,  setTransitionIdx]  = useState(null);
 
@@ -269,6 +178,7 @@ export default function PatientFormsPage() {
   const blobsRef     = useRef({});
   const emailSentRef = useRef(false);
   const cancellationEmailRef = useRef(""); // fresh value for async mergeAndSend
+  const prefillCache = useRef({});
 
   // Final state
   const [mergedUrl,   setMergedUrl]   = useState(null);
@@ -278,6 +188,7 @@ export default function PatientFormsPage() {
   const handleInfoChange = (key, value) => {
     setInfo(prev => {
       const next = { ...prev, [key]: value };
+      next.fullName = buildFullName(next);
       infoRef.current = next;
       return next;
     });
@@ -426,7 +337,9 @@ export default function PatientFormsPage() {
 
   const handleReset = () => {
     setStage("info");
-    setInfo({ fullName: "", phone: "", email: "", location: "" });
+    setInfo(INITIAL_INFO);
+    infoRef.current = INITIAL_INFO;
+    prefillCache.current = {};
     setFormAnswers(initialAnswers());
     setFormSteps(INITIAL_STEPS);
     cancellationEmailRef.current = "";
@@ -452,21 +365,20 @@ export default function PatientFormsPage() {
   const hipaaStep  = inHIPAA  ? hiStep : 0;
   const intakeStep = inIntake ? hiStep - HIPAA_STEPS : 0;
 
-  // Pre-fill HIPAA+Intake from global info
-  const hipaaIntakeAnswers = {
-    ...formAnswers["hipaa-intake"],
-    firstName:      formAnswers["hipaa-intake"].firstName      || info.fullName?.split(" ")[0] || "",
-    lastName:       formAnswers["hipaa-intake"].lastName       || info.fullName?.split(" ").slice(1).join(" ") || "",
-    cellPhone:      formAnswers["hipaa-intake"].cellPhone      || info.phone || "",
-    email:          formAnswers["hipaa-intake"].email          || info.email || "",
-    clinicLocation: formAnswers["hipaa-intake"].clinicLocation || info.location || "",
+  // ── Prefilled answers per form (global info → each form's own keys) ──
+  // Cached per form so object identity only changes when that form's own
+  // answers or the global info change. Mappers with [answers] deps then
+  // don't re-render their PDF on every keystroke in a later form.
+  const getAnswers = (formId) => {
+    const own = formAnswers[formId];
+    const c   = prefillCache.current[formId];
+    if (c && c.own === own && c.info === info) return c.result;
+    const result = withPrefill(formId, own, info);
+    prefillCache.current[formId] = { own, info, result };
+    return result;
   };
-
-  // Pre-fill Cancellation Policy email from global info (its step 0 requires a valid email)
-  const cancellationAnswers = {
-    ...formAnswers["cancellation"],
-    email: formAnswers["cancellation"].email ?? info.email ?? "",
-  };
+  const hipaaIntakeAnswers  = getAnswers("hipaa-intake");
+  const cancellationAnswers = getAnswers("cancellation");
   cancellationEmailRef.current = (cancellationAnswers.email || "").trim();
 
   const headerLabel = stage === "info" ? "Patient Information"
@@ -529,7 +441,7 @@ export default function PatientFormsPage() {
 
           {/* Global info */}
           {stage === "info" && (
-            <GlobalInfoStep info={info} onChange={handleInfoChange} onNext={() => { setStage(0); window.scrollTo({ top: 0, behavior: "smooth" }); }} />
+            <GlobalInfoStep forms={FORMS} info={info} onChange={handleInfoChange} onNext={() => { setStage(0); window.scrollTo({ top: 0, behavior: "smooth" }); }} />
           )}
 
           {/* Transition banner */}
@@ -574,7 +486,7 @@ export default function PatientFormsPage() {
             return (
               <HealthHistoryForm
                 currentStep={step}
-                answers={formAnswers["health-history"]}
+                answers={getAnswers("health-history")}
                 onChange={(k, v) => handleChange("health-history", k, v)}
                 onNext={() => handleNext("health-history")}
                 onBack={() => handleBack("health-history")}
@@ -589,7 +501,7 @@ export default function PatientFormsPage() {
             return (
               <GAD7Form
                 currentStep={step}
-                answers={formAnswers["gad7"]}
+                answers={getAnswers("gad7")}
                 onChange={(k, v) => handleChange("gad7", k, v)}
                 onNext={() => handleNext("gad7")}
                 onBack={() => handleBack("gad7")}
@@ -604,7 +516,7 @@ export default function PatientFormsPage() {
             return (
               <ASRSForm
                 currentStep={step}
-                answers={formAnswers["asrs"]}
+                answers={getAnswers("asrs")}
                 onChange={(k, v) => handleChange("asrs", k, v)}
                 onNext={() => handleNext("asrs")}
                 onBack={() => handleBack("asrs")}
@@ -619,7 +531,7 @@ export default function PatientFormsPage() {
             return (
               <PHQ9Form
                 currentStep={step}
-                answers={formAnswers["phq9"]}
+                answers={getAnswers("phq9")}
                 onChange={(k, v) => handleChange("phq9", k, v)}
                 onNext={() => handleNext("phq9")}
                 onBack={() => handleBack("phq9")}
@@ -634,7 +546,7 @@ export default function PatientFormsPage() {
             return (
               <BrownForm
                 currentStep={step}
-                answers={formAnswers["brown-scales"]}
+                answers={getAnswers("brown-scales")}
                 onChange={(k, v) => handleChange("brown-scales", k, v)}
                 onNext={() => handleNext("brown-scales")}
                 onBack={() => handleBack("brown-scales")}
@@ -660,9 +572,7 @@ export default function PatientFormsPage() {
           {/* ── Silent mappers — mount only when form is completed ── */}
           {completedForms.map(idx => {
             const formId = FORMS[idx].id;
-            const answers = formId === "hipaa-intake" ? hipaaIntakeAnswers
-                          : formId === "cancellation" ? cancellationAnswers
-                          : formAnswers[formId];
+            const answers = getAnswers(formId);
             if (blobsRef.current[formId]) return null; // already got blob
             return (
               <SilentMapper

@@ -1,5 +1,7 @@
 "use client";
 
+import { toUSDate } from "../utils/formatDate";
+
 // ─────────────────────────────────────────────────────────────────────────────
 // CombinedImageMapper.js
 //
@@ -180,7 +182,7 @@ function drawIntakePage(canvas, answers) {
       t(answers.lastName,   INTAKE_POS.lastName.x,   INTAKE_POS.lastName.y,   320);
       t(answers.firstName,  INTAKE_POS.firstName.x,  INTAKE_POS.firstName.y,  290);
       t(answers.mi,         INTAKE_POS.mi.x,         INTAKE_POS.mi.y,          48);
-      t(answers.dob,        INTAKE_POS.dob.x,        INTAKE_POS.dob.y,         210);
+      t(toUSDate(answers.dob),        INTAKE_POS.dob.x,        INTAKE_POS.dob.y,         210);
       t(answers.gender,     INTAKE_POS.gender.x,     INTAKE_POS.gender.y,      146);
       t(answers.address,    INTAKE_POS.address.x,    INTAKE_POS.address.y,     425);
       t(answers.apt,        INTAKE_POS.apt.x,        INTAKE_POS.apt.y,         106);
@@ -211,14 +213,14 @@ function drawIntakePage(canvas, answers) {
       t(answers.priProvider,     INTAKE_POS.priProvider.x,     INTAKE_POS.priProvider.y,     531);
       t(answers.priMemberId,     INTAKE_POS.priMemberId.x,     INTAKE_POS.priMemberId.y,     531);
       t(answers.priPolicyOwner,  INTAKE_POS.priPolicyOwner.x,  INTAKE_POS.priPolicyOwner.y,  531);
-      t(answers.priPolicyDob,    INTAKE_POS.priPolicyDob.x,    INTAKE_POS.priPolicyDob.y,    531);
+      t(toUSDate(answers.priPolicyDob),    INTAKE_POS.priPolicyDob.x,    INTAKE_POS.priPolicyDob.y,    531);
       t(answers.priRelationship, INTAKE_POS.priRelationship.x, INTAKE_POS.priRelationship.y, 531);
 
       // Secondary Insurance
       t(answers.secProvider,     INTAKE_POS.secProvider.x,     INTAKE_POS.secProvider.y,     531);
       t(answers.secMemberId,     INTAKE_POS.secMemberId.x,     INTAKE_POS.secMemberId.y,     531);
       t(answers.secPolicyOwner,  INTAKE_POS.secPolicyOwner.x,  INTAKE_POS.secPolicyOwner.y,  531);
-      t(answers.secPolicyDob,    INTAKE_POS.secPolicyDob.x,    INTAKE_POS.secPolicyDob.y,    531);
+      t(toUSDate(answers.secPolicyDob),    INTAKE_POS.secPolicyDob.x,    INTAKE_POS.secPolicyDob.y,    531);
       t(answers.secRelationship, INTAKE_POS.secRelationship.x, INTAKE_POS.secRelationship.y, 531);
 
       // Signature image
@@ -228,16 +230,16 @@ function drawIntakePage(canvas, answers) {
         sigImg.onload = () => {
           const sp = INTAKE_POS.signature;
           ctx.drawImage(sigImg, sp.x, sp.y - sp.h, sp.w, sp.h);
-          t(answers.sigDate, INTAKE_POS.sigDate.x, INTAKE_POS.sigDate.y, 266);
+          t(toUSDate(answers.sigDate), INTAKE_POS.sigDate.x, INTAKE_POS.sigDate.y, 266);
           resolve();
         };
         sigImg.onerror = () => {
-          t(answers.sigDate, INTAKE_POS.sigDate.x, INTAKE_POS.sigDate.y, 266);
+          t(toUSDate(answers.sigDate), INTAKE_POS.sigDate.x, INTAKE_POS.sigDate.y, 266);
           resolve();
         };
         sigImg.src = answers.signature;
       } else {
-        t(answers.sigDate, INTAKE_POS.sigDate.x, INTAKE_POS.sigDate.y, 100);
+        t(toUSDate(answers.sigDate), INTAKE_POS.sigDate.x, INTAKE_POS.sigDate.y, 100);
         resolve();
       }
     };

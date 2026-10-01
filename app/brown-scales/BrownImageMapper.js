@@ -85,6 +85,7 @@ const INFO_TEXT = {
   patientBirthM: { x: 847,  y: 281 },
   patientBirthD: { x: 915,  y: 281 },
   patientBirthY: { x: 988,  y: 281 },
+  patientAge:    { x: 1148, y: 281 },   // ADDED — Age line between Birth Date and Sex
   patientSchool: { x: 560,  y: 345 },
   patientGrade:  { x: 1341, y: 355 },
 };
@@ -110,6 +111,19 @@ function drawField(ctx, text, x, y, fontSize) {
   ctx.textAlign = "center";
   ctx.textBaseline = "middle";
   ctx.fillText(text, x, y);
+  ctx.restore();
+}
+
+// Left-aligned variant for long free-text fields (School / Grade). The
+// centred drawField overlapped the printed "School"/"Grade" labels.
+function drawFieldLeft(ctx, text, x, y, fontSize, maxWidth) {
+  if (!text) return;
+  ctx.save();
+  ctx.font = `500 ${fontSize||22}px Arial, sans-serif`;
+  ctx.fillStyle = "#1e293b";
+  ctx.textAlign = "left";
+  ctx.textBaseline = "middle";
+  ctx.fillText(text, x, y, maxWidth);
   ctx.restore();
 }
 
@@ -154,8 +168,11 @@ function drawInfoFields(ctx, answers) {
   }
 
   // School / Grade
-  drawField(ctx, answers.patientSchool, 600,  345, 22);
-  drawField(ctx, answers.patientGrade,  1341, 355, 22);
+  drawFieldLeft(ctx, answers.patientSchool, INFO_TEXT.patientSchool.x, INFO_TEXT.patientSchool.y, 22, 700);
+  drawFieldLeft(ctx, answers.patientGrade,  INFO_TEXT.patientGrade.x,  INFO_TEXT.patientGrade.y,  22, 160);
+
+  // Age
+  drawField(ctx, answers.patientAge != null ? String(answers.patientAge) : "", INFO_TEXT.patientAge.x, INFO_TEXT.patientAge.y, 20);
 
   // Sex checkbox
   if (answers.patientSex && SEX_COORDS[answers.patientSex]) {

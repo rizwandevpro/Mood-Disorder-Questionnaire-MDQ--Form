@@ -1,5 +1,7 @@
 "use client";
 
+import { toUSDate } from "../utils/formatDate";
+
 // ─────────────────────────────────────────────────────────────────────────────
 // PHQ9ImageMapper.js
 // Background: Patient-Health-Questionnaire-PHQ-9.jpg (assumed ~1700×2244)
@@ -111,7 +113,7 @@ export default function PHQ9ImageMapper({ answers, silentMode, onPdfReady }) {
 
       // ── Name & Date ──
       if (answers.patientName) drawText(ctx, answers.patientName, NAME_X, NAME_Y);
-      if (answers.patientDate) drawText(ctx, answers.patientDate, DATE_X, DATE_Y);
+      if (answers.patientDate) drawText(ctx, toUSDate(answers.patientDate), DATE_X, DATE_Y);
 
       // ── Q1–Q9 checkmarks ──
       Q_COORDS.forEach(({ key, y }) => {

@@ -1,5 +1,7 @@
 "use client";
 
+import { toUSDate } from "../utils/formatDate";
+
 // ─────────────────────────────────────────────────────────────────────────────
 // HealthHistoryImageMapper.js
 //
@@ -337,7 +339,7 @@ function drawPage2(ctx, answers) {
     sigImg.src = answers.hhSignature;
     // Drawn async — handled in drawPage2Async
   }
-  t(answers.hhSigDate, 1264, 2069, 240);
+  t(toUSDate(answers.hhSigDate, { shortYear: true }), 1264, 2069, 240);
 }
 
 // Wrap text helper

@@ -1,5 +1,7 @@
 "use client";
 
+import { toUSDate } from "../utils/formatDate";
+
 import { useRef, useCallback, useState, useEffect } from "react";
 import { Q1_ITEMS, Q3_OPTION_INDEX, Q3_LABELS } from "./mdqSteps";
 
@@ -81,7 +83,7 @@ export default function MDQImageMapper({ answers, silentMode = false, onPdfReady
       };
 
       if (answers.name) drawText(answers.name, POS.NAME_X, POS.NAME_Y);
-      if (answers.date) drawText(answers.date,  POS.DATE_X, POS.DATE_Y);
+      if (answers.date) drawText(toUSDate(answers.date),  POS.DATE_X, POS.DATE_Y);
 
       Q1_ITEMS.forEach((item, i) => {
         const answer = answers[item.key];
@@ -114,7 +116,7 @@ export default function MDQImageMapper({ answers, silentMode = false, onPdfReady
       ctx.fillText("MDQ — Filled Form", 80, 100);
       ctx.fillStyle = "#374151";
       ctx.font = "bold 22px Arial";
-      ctx.fillText(`Patient: ${answers.name || "—"}     Date: ${answers.date || "—"}`, 80, 210);
+      ctx.fillText(`Patient: ${answers.name || "—"}     Date: ${toUSDate(answers.date) || "—"}`, 80, 210);
       setStatus("ready");
     };
   }, [answers]);

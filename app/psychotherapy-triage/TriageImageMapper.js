@@ -1,5 +1,7 @@
 "use client";
 
+import { toUSDate } from "../utils/formatDate";
+
 // ─────────────────────────────────────────────────────────────────────────────
 // TriageImageMapper.js
 //
@@ -181,7 +183,7 @@ function drawPage(ctx, answers) {
 
   // ── Name / Date ────────────────────────────────────────────────────────────
   drawText(ctx, answers.ptqName, NAME_XY[0], NAME_XY[1], 500);
-  drawText(ctx, answers.ptqDate, DATE_XY[0], DATE_XY[1], 250);
+  drawText(ctx, toUSDate(answers.ptqDate), DATE_XY[0], DATE_XY[1], 250);
 }
 
 // ─────────────────────────────────────────────────────────────────────────────

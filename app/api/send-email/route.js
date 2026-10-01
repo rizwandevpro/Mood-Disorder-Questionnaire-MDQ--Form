@@ -6,6 +6,7 @@
 // Required .env variables:
 //   RESEND_API_KEY   ← from resend.com dashboard
 
+import { toUSDate } from "../../utils/formatDate";
 import { Resend } from "resend";
 
 const resend       = new Resend(process.env.RESEND_API_KEY);
@@ -53,7 +54,7 @@ export async function POST(request) {
             ${displayLocation ? `<tr><td style="padding:6px 0;color:#64748b;">Location</td>
                 <td style="padding:6px 0;font-weight:600;">${displayLocation}</td></tr>` : ""}
             <tr><td style="padding:6px 0;color:#64748b;">Date</td>
-                <td style="padding:6px 0;">${patientDate || "—"}</td></tr>
+                <td style="padding:6px 0;">${toUSDate(patientDate) || "—"}</td></tr>
             <tr><td style="padding:6px 0;color:#64748b;">Form</td>
                 <td style="padding:6px 0;">Mood Disorder Questionnaire (MDQ)</td></tr>
           </table>
