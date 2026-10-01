@@ -66,7 +66,7 @@ export const HH_STEPS = [
   {
     id: "conditions", type: "conditions",
     title: "Medical Conditions",
-    subtitle: "Check all conditions you currently have or have had in the past.",
+    subtitle: "Check all conditions you currently have or have had in the past. If none apply, select \"None\".",
   },
 
   // ── Step 3: Allergies & Medications ──────────────────────────────────────

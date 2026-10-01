@@ -208,13 +208,33 @@ function StepConditions({ answers, onChange, errors }) {
   ];
   const ckey = c => "cond_" + c.replace(/[^a-zA-Z0-9]/g,"_");
 
-  const Pill = ({ label, condKey }) => {
-    const checked = !!answers[condKey];
+  // "None" is stored as `condNone` — deliberately NOT a "cond_" key, so the
+  // ImageMapper (which only draws its own cond_* checkbox map) never renders
+  // it. The PDF has no "None" box; selecting None leaves the section blank.
+  // None and the real conditions are mutually exclusive.
+  const toggleCondition = (condKey) => {
+    const next = !answers[condKey];
+    onChange(condKey, next);
+    if (next && answers.condNone) onChange("condNone", false);
+  };
+  const toggleNone = () => {
+    const next = !answers.condNone;
+    onChange("condNone", next);
+    if (next) {
+      Object.keys(answers).forEach(k => { if (k.startsWith("cond_") && answers[k]) onChange(k, false); });
+      if (answers.cancerType)    onChange("cancerType", "");
+      if (answers.condOtherText) onChange("condOtherText", "");
+    }
+  };
+
+  const Pill = ({ label, condKey, checked: checkedProp, onToggle }) => {
+    const checked = checkedProp !== undefined ? !!checkedProp : !!answers[condKey];
+    const toggle  = onToggle || (() => toggleCondition(condKey));
     return (
       <div
         role="checkbox" aria-checked={checked} tabIndex={0}
-        onClick={() => onChange(condKey, !checked)}
-        onKeyDown={e => (e.key===" "||e.key==="Enter") && onChange(condKey, !checked)}
+        onClick={toggle}
+        onKeyDown={e => { if (e.key===" "||e.key==="Enter") { e.preventDefault(); toggle(); } }}
         className="hh-pill"
         style={{
           display:"flex", alignItems:"center", gap:"8px",
@@ -244,6 +264,9 @@ function StepConditions({ answers, onChange, errors }) {
 
   return (
     <div style={{display:"flex",flexDirection:"column",gap:"16px"}}>
+      <div style={{paddingBottom:"12px",borderBottom:"2px solid #f1f5f9"}}>
+        <Pill label="None — I have no current or past conditions" checked={answers.condNone} onToggle={toggleNone} />
+      </div>
       <div className="hh-cond-grid">
         {ALL_CONDITIONS.map(c => (
           <div key={c}>
@@ -715,7 +738,7 @@ function validateHHStep(step, answers) {
 
   if (step.type==="conditions") {
     const anyChecked = Object.keys(answers).some(k=>k.startsWith("cond_") && answers[k]);
-    if (!anyChecked) errors._step = "Please select at least one condition below (choose \"Other\" if none apply).";
+    if (!anyChecked && !answers.condNone) errors._step = "Please select at least one condition, or choose \"None\" if none apply.";
   }
 
   if (step.type==="allergies") {
@@ -751,7 +774,7 @@ function Card({ step, answers, onChange, onNext, onBack, isFirst, isLast }) {
   const [errors, setErrors] = useState({});
   const errorsRef = useRef(errors);
   errorsRef.current = errors;
-  const handleChange = useCallback((key,value) => { onChange(key,value); if(errorsRef.current[key])setErrors(p=>({...p,[key]:null})); },[onChange]);
+  const handleChange = useCallback((key,value) => { onChange(key,value); if(errorsRef.current[key]||errorsRef.current._step)setErrors(p=>({...p,[key]:null,_step:null})); },[onChange]);
   const handleNext = () => { const errs=validateHHStep(step,answers); if(Object.keys(errs).length>0){setErrors(errs);return;} setErrors({}); onNext(); };
 
   const renderContent = () => {
