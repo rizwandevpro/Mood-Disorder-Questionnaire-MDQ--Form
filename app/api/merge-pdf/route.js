@@ -1,7 +1,7 @@
 // app/api/merge-pdf/route.js
 //
-// Receives 6 PDF base64 strings, merges them into one PDF using pdf-lib,
-// sends one email to clinic + one to patient with all 6 as separate attachments.
+// Receives N PDF base64 strings (currently 7), merges them into one PDF using pdf-lib,
+// sends one email to clinic + one to patient with each form as a separate attachment.
 //
 // Required .env variables:
 //   RESEND_API_KEY
@@ -15,7 +15,7 @@ const CLINIC_EMAIL = process.env.CLINIC_EMAIL || "reports@cambridgemich.com";
 const FROM_FORMS   = "Cambridge Psychiatry Forms <reports@cambridgemich.com>";
 const FROM_REPLY   = "Cambridge Psychiatry <reports@cambridgemich.com>";
 
-// Extend Vercel timeout — merging 6 large PDFs needs time
+// Extend Vercel timeout — merging several large PDFs needs time
 export const maxDuration = 60;
 
 export async function POST(req) {
@@ -66,7 +66,7 @@ export async function POST(req) {
           <h2 style="color:white;margin:0;font-size:18px;">New Patient — Complete Form Package</h2>
         </div>
         <div style="background:#f8fafc;padding:24px;border:1px solid #e2e8f0;border-top:none;border-radius:0 0 8px 8px;">
-          <p style="margin:0 0 12px;">A new patient has completed all <strong>6 intake forms</strong>.</p>
+          <p style="margin:0 0 12px;">A new patient has completed all <strong>${attachments.length} intake forms</strong>.</p>
           <table style="width:100%;border-collapse:collapse;font-size:14px;">
             <tr><td style="padding:6px 0;color:#64748b;width:110px;">Patient</td>
                 <td style="padding:6px 0;font-weight:600;">${displayName}</td></tr>
@@ -102,7 +102,7 @@ export async function POST(req) {
         <div style="background:#f8fafc;padding:24px;border:1px solid #e2e8f0;border-top:none;border-radius:0 0 8px 8px;">
           <p style="margin:0 0 12px;">Dear ${displayName},</p>
           <p style="margin:0 0 16px;">
-            Thank you for completing your intake forms. All 6 forms have been received successfully.
+            Thank you for completing your intake forms. All ${attachments.length} forms have been received successfully.
             A combined PDF and individual copies are attached to this email for your records.
           </p>
 

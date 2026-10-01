@@ -3,9 +3,10 @@
 // ─────────────────────────────────────────────────────────────────────────────
 // app/patient-forms/page.js   →   route: /patient-forms
 //
-// Unified sequential flow through 6 forms:
+// Unified sequential flow through 7 forms:
 //   Stage "info"  → Global Patient Info (name, phone, email, location)
-//   Stage 0–5     → HIPAA+Intake, Health History, GAD-7, ASRS, PHQ-9, Brown
+//   Stage 0–6     → HIPAA+Intake, Health History, GAD-7, ASRS, PHQ-9, Brown,
+//                   Cancellation & No-Show Policy
 //   Stage "done"  → All PDFs merged → one download + one email
 //
 // KEY FIXES vs v1:
@@ -43,6 +44,10 @@ import BrownForm        from "../brown-scales/BrownForm";
 import BrownImageMapper from "../brown-scales/BrownImageMapper";
 import { THANKYOU_STEP as BROWN_THANKYOU } from "../brown-scales/brownSteps";
 
+import QuickConsentForm        from "../cancellation-no-show-policy/QuickConsentForm";
+import QuickConsentImageMapper from "../cancellation-no-show-policy/QuickConsentImageMapper";
+import { THANKYOU_STEP as CANCELLATION_THANKYOU } from "../cancellation-no-show-policy/quickConsentSteps";
+
 // ── Form sequence ─────────────────────────────────────────────────────────────
 const FORMS = [
   { id: "hipaa-intake",   label: "HIPAA & Intake",   icon: "🔒" },
@@ -51,8 +56,35 @@ const FORMS = [
   { id: "asrs",           label: "ASRS ADHD",        icon: "⚡" },
   { id: "phq9",           label: "PHQ-9 Depression", icon: "💙" },
   { id: "brown-scales",   label: "Brown Scales",     icon: "📋" },
+  { id: "cancellation",   label: "Cancellation Policy", icon: "📅" },
 ];
 const TOTAL_FORMS = FORMS.length;
+
+// Single source of truth for merge order + names used in the email.
+const FORM_NAMES = {
+  "hipaa-intake":   "HIPAA Consent & Patient Intake",
+  "health-history": "Patient Health History",
+  "gad7":           "GAD-7 Anxiety Screener",
+  "asrs":           "ADHD Self-Report Scale (ASRS)",
+  "phq9":           "Patient Health Questionnaire (PHQ-9)",
+  "brown-scales":   "Brown Executive Function/Attention Scales",
+  "cancellation":   "Cancellation & No-Show Policy",
+};
+
+// Initial per-form answers / steps (used on mount AND on reset).
+// Step 0 is skipped for forms whose step 0 is a built-in "info" step.
+// Cancellation starts at 0: its step 0 is the policy text itself, not an info step.
+const initialAnswers = () => Object.fromEntries(FORMS.map(f => [f.id, {}]));
+const INITIAL_STEPS = {
+  "hipaa-intake":   0,  // uses its own step system
+  "health-history": 0,  // no built-in info step
+  "gad7":           1,  // skip built-in info step 0
+  "asrs":           1,
+  "phq9":           1,
+  "brown-scales":   1,
+  "cancellation":   0,  // step 0 = policy text — must be shown
+};
+const MIN_STEP = (formId) => INITIAL_STEPS[formId];
 
 // HIPAA+Intake internal step config (matches original hipaa-intake/page.js)
 const HIPAA_STEPS              = 2;   // globalStep 0–1 = HIPAAForm
@@ -116,7 +148,7 @@ function GlobalInfoStep({ info, onChange, onNext }) {
       <div style={{ backgroundColor: "white", borderRadius: "20px", padding: "32px 28px", boxShadow: "0 4px 24px rgba(0,0,0,0.07)", border: "1px solid #e2e8f0" }}>
         <h2 style={{ fontSize: "22px", fontWeight: 700, color: "#0f172a", fontFamily: "'Lora', serif", marginBottom: "6px" }}>Before We Begin</h2>
         <p style={{ fontSize: "14px", color: "#64748b", fontFamily: "'Source Sans 3', sans-serif", lineHeight: 1.6, marginBottom: "24px" }}>
-          Please provide your contact information. This will be shared across all 6 forms — you won't need to enter it again.
+          Please provide your contact information. This will be shared across all {TOTAL_FORMS} forms — you won't need to enter it again.
         </p>
 
         {field("fullName", "Full Name",    "text",  "e.g. Jane Smith",       true)}
@@ -206,6 +238,9 @@ function SilentMapper({ formId, answers, info, onPdfReady }) {
       {formId === "brown-scales" && (
         <BrownImageMapper answers={answers} silentMode onPdfReady={onPdfReady} />
       )}
+      {formId === "cancellation" && (
+        <QuickConsentImageMapper answers={answers} silentMode onPdfReady={onPdfReady} />
+      )}
     </div>
   );
 }
@@ -219,25 +254,10 @@ export default function PatientFormsPage() {
   const [transitionIdx,  setTransitionIdx]  = useState(null);
 
   // Per-form answers
-  const [formAnswers, setFormAnswers] = useState({
-    "hipaa-intake":   {},
-    "health-history": {},
-    "gad7":           {},
-    "asrs":           {},
-    "phq9":           {},
-    "brown-scales":   {},
-  });
+  const [formAnswers, setFormAnswers] = useState(initialAnswers);
 
-  // Per-form internal step — starts at 1 to skip built-in info step
-  // EXCEPTION: hipaa-intake uses its own globalStep starting at 0
-  const [formSteps, setFormSteps] = useState({
-    "hipaa-intake":   0,  // uses its own step system
-    "health-history": 0,  // no built-in info step
-    "gad7":           1,  // skip built-in info step 0
-    "asrs":           1,
-    "phq9":           1,
-    "brown-scales":   1,
-  });
+  // Per-form internal step (see INITIAL_STEPS for why some start at 1)
+  const [formSteps, setFormSteps] = useState(INITIAL_STEPS);
 
   // Which forms have completed (to mount their mappers)
   const [completedForms, setCompletedForms] = useState([]);
@@ -248,6 +268,7 @@ export default function PatientFormsPage() {
   // PDF blobs
   const blobsRef     = useRef({});
   const emailSentRef = useRef(false);
+  const cancellationEmailRef = useRef(""); // fresh value for async mergeAndSend
 
   // Final state
   const [mergedUrl,   setMergedUrl]   = useState(null);
@@ -274,9 +295,8 @@ export default function PatientFormsPage() {
   }, []);
 
   const handleBack = useCallback((formId) => {
-    // Don't go below 1 for forms with skipped info step
-    const minStep = formId === "hipaa-intake" || formId === "health-history" ? 0 : 1;
-    setFormSteps(prev => ({ ...prev, [formId]: Math.max(prev[formId] - 1, minStep) }));
+    // Don't go below the form's starting step (skipped info steps stay skipped)
+    setFormSteps(prev => ({ ...prev, [formId]: Math.max(prev[formId] - 1, MIN_STEP(formId)) }));
     window.scrollTo({ top: 0, behavior: "smooth" });
   }, []);
 
@@ -318,15 +338,8 @@ export default function PatientFormsPage() {
         r.readAsDataURL(blob);
       });
 
-      const formOrder = ["hipaa-intake", "health-history", "gad7", "asrs", "phq9", "brown-scales"];
-      const formNames = {
-        "hipaa-intake":   "HIPAA Consent & Patient Intake",
-        "health-history": "Patient Health History",
-        "gad7":           "GAD-7 Anxiety Screener",
-        "asrs":           "ADHD Self-Report Scale (ASRS)",
-        "phq9":           "Patient Health Questionnaire (PHQ-9)",
-        "brown-scales":   "Brown Executive Function/Attention Scales",
-      };
+      const formOrder = FORMS.map(f => f.id);
+      const formNames = FORM_NAMES;
 
       const name = currentInfo.fullName || "Patient";
 
@@ -367,7 +380,9 @@ export default function PatientFormsPage() {
         body: JSON.stringify({
           attachments,
           patientName:    name,
-          patientEmail:   currentInfo.email?.trim() || "",
+          // Global email first; fall back to the email typed on the Cancellation
+          // Policy step (that step requires one and promises a copy to it).
+          patientEmail:   currentInfo.email?.trim() || cancellationEmailRef.current || "",
           patientPhone:   currentInfo.phone || "",
           clinicLocation: currentInfo.location || "",
         }),
@@ -412,8 +427,9 @@ export default function PatientFormsPage() {
   const handleReset = () => {
     setStage("info");
     setInfo({ fullName: "", phone: "", email: "", location: "" });
-    setFormAnswers({ "hipaa-intake": {}, "health-history": {}, "gad7": {}, "asrs": {}, "phq9": {}, "brown-scales": {} });
-    setFormSteps({ "hipaa-intake": 0, "health-history": 0, "gad7": 1, "asrs": 1, "phq9": 1, "brown-scales": 1 });
+    setFormAnswers(initialAnswers());
+    setFormSteps(INITIAL_STEPS);
+    cancellationEmailRef.current = "";
     setCompletedForms([]);
     blobsRef.current = {};
     emailSentRef.current = false;
@@ -445,6 +461,13 @@ export default function PatientFormsPage() {
     email:          formAnswers["hipaa-intake"].email          || info.email || "",
     clinicLocation: formAnswers["hipaa-intake"].clinicLocation || info.location || "",
   };
+
+  // Pre-fill Cancellation Policy email from global info (its step 0 requires a valid email)
+  const cancellationAnswers = {
+    ...formAnswers["cancellation"],
+    email: formAnswers["cancellation"].email ?? info.email ?? "",
+  };
+  cancellationEmailRef.current = (cancellationAnswers.email || "").trim();
 
   const headerLabel = stage === "info" ? "Patient Information"
     : stage === "done"                 ? "All Forms Complete"
@@ -619,10 +642,27 @@ export default function PatientFormsPage() {
             );
           })()}
 
+          {/* ── FORM 6: Cancellation & No-Show Policy ── */}
+          {stage === 6 && !showTransition && (() => {
+            const step = formSteps["cancellation"];
+            if (checkAndSchedule("cancellation", 6, step, CANCELLATION_THANKYOU)) return null;
+            return (
+              <QuickConsentForm
+                currentStep={step}
+                answers={cancellationAnswers}
+                onChange={(k, v) => handleChange("cancellation", k, v)}
+                onNext={() => handleNext("cancellation")}
+                onBack={() => handleBack("cancellation")}
+              />
+            );
+          })()}
+
           {/* ── Silent mappers — mount only when form is completed ── */}
           {completedForms.map(idx => {
             const formId = FORMS[idx].id;
-            const answers = formId === "hipaa-intake" ? hipaaIntakeAnswers : formAnswers[formId];
+            const answers = formId === "hipaa-intake" ? hipaaIntakeAnswers
+                          : formId === "cancellation" ? cancellationAnswers
+                          : formAnswers[formId];
             if (blobsRef.current[formId]) return null; // already got blob
             return (
               <SilentMapper
@@ -645,7 +685,7 @@ export default function PatientFormsPage() {
               </div>
               <h1 style={{ fontSize: "28px", fontWeight: 700, color: "#0f172a", fontFamily: "'Lora', serif", marginBottom: "8px" }}>All Forms Complete!</h1>
               <p style={{ fontSize: "15px", color: "#64748b", maxWidth: "400px", lineHeight: 1.6, marginBottom: "6px", fontFamily: "'Source Sans 3', sans-serif" }}>
-                Thank you, <strong style={{ color: "#1e293b" }}>{info.fullName}</strong>. All 6 forms have been submitted to Cambridge Psychiatry.
+                Thank you, <strong style={{ color: "#1e293b" }}>{info.fullName}</strong>. All {TOTAL_FORMS} forms have been submitted to Cambridge Psychiatry.
               </p>
               <p style={{ fontSize: "13px", color: "#94a3b8", marginBottom: "28px", fontFamily: "'Source Sans 3', sans-serif" }}>
                 Can't find the email? Please check your spam or junk folder.
@@ -690,7 +730,7 @@ export default function PatientFormsPage() {
                 {emailStatus === "sent" && (
                   <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: "6px", fontSize: "13px", color: "#16a34a", fontFamily: "'Source Sans 3', sans-serif" }}>
                     <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}><path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7"/></svg>
-                    {info.email ? `Emailed to ${info.email} and our office` : "Emailed to our office"}
+                    {(info.email?.trim() || cancellationAnswers.email?.trim()) ? `Emailed to ${info.email?.trim() || cancellationAnswers.email.trim()} and our office` : "Emailed to our office"}
                   </div>
                 )}
                 {emailStatus === "error" && (
