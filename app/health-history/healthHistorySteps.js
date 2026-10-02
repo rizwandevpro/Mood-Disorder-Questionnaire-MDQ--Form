@@ -3,15 +3,17 @@
 //
 // STEPS:
 //   0  — personal        (Name, Date, Age, Birthdate, Marital, Gender, Occupation, Visit reason)
-//   1  — healthMaint     (Health maintenance dates — Women Only, Both, Men Only)
-//   2  — conditions      (Condition checkboxes + Cancer type + Other)
-//   3  — allergies       (Allergy checkboxes + text + Medications textarea)
-//   4  — healthHabits    (Caffeine, Tobacco, Alcohol, Drugs, Diet, Exercise, Seatbelts)
-//   5  — surgicalHistory (Up to 8 rows: Year, Hospital, Surgery type)
-//   6  — pregnancyOther  (Pregnancy stats + up to 6 child rows + Other hospitalizations)
-//   7  — familyHistory   (Father, Mother, Brothers x4, Sisters x4 + disease checkboxes)
-//   8  — additional      (Additional info textarea + Patient signature + Date)
-//   9  — thankyou
+//   1  — conditions      (Condition checkboxes + Cancer type + Other)
+//   2  — allergies       (Allergy checkboxes + text + Medications textarea)
+//   3  — healthHabits    (Caffeine, Tobacco, Alcohol, Drugs, Diet, Exercise, Seatbelts)
+//   4  — surgicalHistory (Up to 8 rows: Year, Hospital, Surgery type)
+//   5  — pregnancyOther  (Pregnancy stats + up to 6 child rows + Other hospitalizations)
+//   6  — familyHistory   (Father, Mother, Brothers x4, Sisters x4 + disease checkboxes)
+//   7  — additional      (Additional info textarea + Patient signature + Date)
+//   8  — thankyou
+//
+// Health Maintenance step REMOVED by request. Its hm* fields are never set, so
+// the ImageMapper's existing hm* draw calls render nothing (coordinates kept).
 // ─────────────────────────────────────────────────────────────────────────────
 
 export const CONDITIONS = [
@@ -55,63 +57,56 @@ export const HH_STEPS = [
     ],
   },
 
-  // ── Step 1: Health Maintenance ────────────────────────────────────────────
-  {
-    id: "healthMaint", type: "healthMaint",
-    title: "Health Maintenance",
-    subtitle: "Enter the most recent date for each applicable screening.",
-  },
-
-  // ── Step 2: Conditions ────────────────────────────────────────────────────
+  // ── Step 1: Conditions ────────────────────────────────────────────────────
   {
     id: "conditions", type: "conditions",
     title: "Medical Conditions",
     subtitle: "Check all conditions you currently have or have had in the past. If none apply, select \"None\".",
   },
 
-  // ── Step 3: Allergies & Medications ──────────────────────────────────────
+  // ── Step 2: Allergies & Medications ──────────────────────────────────────
   {
     id: "allergies", type: "allergies",
     title: "Allergies & Medications",
     subtitle: "List known allergies and all current medications.",
   },
 
-  // ── Step 4: Health Habits ─────────────────────────────────────────────────
+  // ── Step 3: Health Habits ─────────────────────────────────────────────────
   {
     id: "healthHabits", type: "healthHabits",
     title: "Health Habits",
     subtitle: "Check appropriate boxes and describe your habits.",
   },
 
-  // ── Step 5: Surgical History ──────────────────────────────────────────────
+  // ── Step 4: Surgical History ──────────────────────────────────────────────
   {
     id: "surgicalHistory", type: "surgicalHistory",
     title: "Surgical History",
     subtitle: "List any surgeries you have had (up to 8). Click + Add to add more rows.",
   },
 
-  // ── Step 6: Pregnancy & Other Hospitalizations ───────────────────────────
+  // ── Step 5: Pregnancy & Other Hospitalizations ───────────────────────────
   {
     id: "pregnancyOther", type: "pregnancyOther",
     title: "Pregnancy & Other Hospitalizations",
     subtitle: "Complete pregnancy history and any other hospitalizations or serious illnesses.",
   },
 
-  // ── Step 7: Family History ────────────────────────────────────────────────
+  // ── Step 6: Family History ────────────────────────────────────────────────
   {
     id: "familyHistory", type: "familyHistory",
     title: "Family History",
     subtitle: "Fill in information about your family's health history.",
   },
 
-  // ── Step 8: Additional Info & Signature ──────────────────────────────────
+  // ── Step 7: Additional Info & Signature ──────────────────────────────────
   {
     id: "additional", type: "additional",
     title: "Additional Information & Signature",
     subtitle: "Share anything else your doctor should know, then sign.",
   },
 
-  // ── Step 9: Thank You ─────────────────────────────────────────────────────
+  // ── Step 8: Thank You ─────────────────────────────────────────────────────
   { id: "thankyou", type: "thankyou" },
 ];
 

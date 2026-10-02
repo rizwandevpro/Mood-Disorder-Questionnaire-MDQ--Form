@@ -1,5 +1,7 @@
 "use client";
 
+import { formatPhoneInput, isValidPhone, formatZipInput, isValidZip, PHONE_ERROR, ZIP_ERROR } from "../utils/validators";
+
 // ─────────────────────────────────────────────────────────────────────────────
 // app/asrs/page.js — ADHD Self-Report Scale (ASRS)
 // Route: /asrs
@@ -28,6 +30,7 @@ function PatientInfoStep({ info, onChange, onNext }) {
     const e = {};
     if (!info.fullName?.trim()) e.fullName = "Full name is required.";
     if (!info.phone?.trim())    e.phone    = "Phone number is required.";
+    else if (!isValidPhone(info.phone)) e.phone = PHONE_ERROR;
     if (info.email?.trim() && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(info.email.trim()))
                                 e.email    = "Please enter a valid email.";
     if (!info.location)         e.location = "Please select a clinic location.";
@@ -49,7 +52,7 @@ function PatientInfoStep({ info, onChange, onNext }) {
         type={type}
         value={info[key] || ""}
         placeholder={placeholder}
-        onChange={e => { onChange(key, e.target.value); setErrors(prev => ({ ...prev, [key]: "" })); }}
+        onChange={e => { onChange(key, type === "tel" ? formatPhoneInput(e.target.value, info[key]) : e.target.value); setErrors(prev => ({ ...prev, [key]: "" })); }}
         style={{ width: "100%", padding: "12px 14px", borderRadius: "10px", border: `1.5px solid ${errors[key] ? "#dc2626" : "#e2e8f0"}`, fontSize: "15px", fontFamily: "'Source Sans 3', sans-serif", color: "#1e293b", outline: "none", boxSizing: "border-box", backgroundColor: "white" }}
       />
       {errors[key] && <p style={{ fontSize: "12px", color: "#dc2626", marginTop: "4px", fontFamily: "'Source Sans 3', sans-serif" }}>{errors[key]}</p>}

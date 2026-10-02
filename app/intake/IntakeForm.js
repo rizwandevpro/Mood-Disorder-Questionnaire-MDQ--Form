@@ -1,5 +1,7 @@
 "use client";
 
+import { formatPhoneInput, isValidPhone, formatZipInput, isValidZip, PHONE_ERROR, ZIP_ERROR } from "../utils/validators";
+
 // ─────────────────────────────────────────────────────────────────────────────
 // IntakeForm.js — New Patient Intake Form UI
 // ─────────────────────────────────────────────────────────────────────────────
@@ -61,17 +63,15 @@ function getSpanClass(span) {
 }
 
 // ── Validation ────────────────────────────────────────────────────────────────
+const PHONE_KEYS = ["cellPhone", "homePhone", "ecTelephone"];
+
 function validateField(key, value, required) {
   const v = (value || "").toString().trim();
   if (required && !v) return "This field is required";
   if (key === "email" && v && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v))
     return "Please enter a valid email address";
-  if ((key === "cellPhone" || key === "homePhone" || key === "ecTelephone") && v) {
-    const d = v.replace(/[\s\-().+]/g, "");
-    if (!/^\d+$/.test(d) || d.length < 7 || d.length > 15) return "Must be 7–15 digits";
-  }
-  if (key === "zip" && v && !/^\d{4,10}$/.test(v.replace(/\s/g, "")))
-    return "Please enter a valid zip code";
+  if (PHONE_KEYS.includes(key) && v && !isValidPhone(v)) return PHONE_ERROR;
+  if (key === "zip" && v && !isValidZip(v)) return ZIP_ERROR;
   return null;
 }
 
@@ -129,8 +129,11 @@ function Field({ f, answers, onChange, errors }) {
           {f.options?.map(o => <option key={o} value={o}>{o}</option>)}
         </select>
       ) : (
-        <input type={f.type} inputMode={f.type==="tel"?"numeric":undefined}
-          value={val} onChange={e => onChange(f.key, e.target.value)}
+        <input type={f.type} inputMode={f.type==="tel"||f.key==="zip"?"numeric":undefined}
+          value={val} onChange={e => onChange(f.key,
+            f.type === "tel" ? formatPhoneInput(e.target.value, val)
+            : f.key === "zip" ? formatZipInput(e.target.value)
+            : e.target.value)}
           placeholder={f.placeholder}
           onFocus={() => setFocused(true)} onBlur={() => setFocused(false)}
           style={iStyle} />

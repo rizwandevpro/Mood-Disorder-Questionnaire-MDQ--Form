@@ -1,5 +1,7 @@
 "use client";
 
+import { formatPhoneInput, isValidPhone, formatZipInput, isValidZip, PHONE_ERROR, ZIP_ERROR } from "../utils/validators";
+
 // ─────────────────────────────────────────────────────────────────────────────
 // MDQForm.js
 //
@@ -139,11 +141,8 @@ const FIELD_RULES = {
     return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v.trim()) ? null : "Please enter a valid email address";
   }},
   phone:         { required: true,  validator: (v) => {
-    const digits = v.replace(/[\s\-().+]/g, "");
-    if (!digits) return "Please enter your phone number";
-    if (!/^\d+$/.test(digits)) return "Phone number must contain only digits";
-    if (digits.length < 7 || digits.length > 15) return "Please enter a valid phone number (7–15 digits)";
-    return null;
+    if (!v || !v.trim()) return "Please enter your phone number";
+    return isValidPhone(v) ? null : PHONE_ERROR;
   }},
   clinicLocation: { required: true, validator: (v) => !v ? "Please select a clinic location" : null },
 };
@@ -209,7 +208,7 @@ function StepInfo({ step, answers, onChange, errors }) {
           type={f.type}
           inputMode={f.type === "tel" ? "numeric" : undefined}
           value={answers[f.key] || ""}
-          onChange={(e) => onChange(f.key, e.target.value)}
+          onChange={(e) => onChange(f.key, f.type === "tel" ? formatPhoneInput(e.target.value, answers[f.key]) : e.target.value)}
           placeholder={f.placeholder}
           className="w-full border-2 rounded-xl px-4 py-3 text-slate-800 bg-slate-50 focus:outline-none focus:ring-2 focus:ring-blue-300 text-base transition placeholder-slate-300"
           style={{

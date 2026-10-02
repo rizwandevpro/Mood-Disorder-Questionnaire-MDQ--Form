@@ -168,31 +168,6 @@ function StepFields({ step, answers, onChange, errors }) {
   );
 }
 
-// ── Step 1: Health Maintenance ────────────────────────────────────────────────
-function StepHealthMaint({ answers, onChange }) {
-  const col = (title, fields) => (
-    <div>
-      <p style={{fontSize:"11px",fontWeight:700,textTransform:"uppercase",letterSpacing:"0.08em",color:"#475569",marginBottom:"14px",paddingBottom:"8px",borderBottom:"2px solid #f1f5f9",fontFamily:"'Source Sans 3', sans-serif"}}>{title}</p>
-      <div style={{display:"flex",flexDirection:"column",gap:"12px"}}>
-        {fields.map(([key,label]) => (
-          <div key={key}>
-            <label style={labelStyle(false)}>{label}</label>
-            <input type="date" value={answers[key]||""} onChange={e=>onChange(key,e.target.value)}
-              style={inputStyle(false,false)} />
-          </div>
-        ))}
-      </div>
-    </div>
-  );
-  return (
-    <div className="hh-maint-grid">
-      {col("Women Only",[["hmMenstrual","Menstrual Period"],["hmMammogram","Mammogram"],["hmPapSmear","Pap Smear"]])}
-      {col("Both Men & Women",[["hmCholesterol","Cholesterol Testing"],["hmColonoscopy","Colonoscopy"],["hmTetanus","Tetanus Booster"],["hmPneumonia","Pneumonia Vaccine"],["hmBoneDensity","Bone Density (DEXA)"]])}
-      {col("Men Only",[["hmDigitalRectal","Digital Rectal Exam"],["hmPSA","PSA (Prostate Blood Test)"]])}
-    </div>
-  );
-}
-
 // ── Step 2: Conditions ────────────────────────────────────────────────────────
 function StepConditions({ answers, onChange, errors }) {
   const ALL_CONDITIONS = [
@@ -780,7 +755,6 @@ function Card({ step, answers, onChange, onNext, onBack, isFirst, isLast }) {
   const renderContent = () => {
     switch(step.type) {
       case "fields":          return <StepFields          step={step} answers={answers} onChange={handleChange} errors={errors} />;
-      case "healthMaint":     return <StepHealthMaint     answers={answers} onChange={handleChange} />;
       case "conditions":      return <StepConditions      answers={answers} onChange={handleChange} errors={errors} />;
       case "allergies":       return <StepAllergiesMeds   answers={answers} onChange={handleChange} errors={errors} />;
       case "healthHabits":    return <StepHealthHabits    answers={answers} onChange={handleChange} errors={errors} />;

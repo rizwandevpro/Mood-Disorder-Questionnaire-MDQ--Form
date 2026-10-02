@@ -9,6 +9,7 @@
 // ─────────────────────────────────────────────────────────────────────────────
 
 import { useState, useEffect, useRef } from "react";
+import { formatPhoneInput, isValidPhone, formatZipInput, isValidZip, PHONE_ERROR, ZIP_ERROR } from "../utils/validators";
 import { GENDER_OPTIONS, MARITAL_OPTIONS, todayISO, calcAge } from "./prefill";
 
 const BRAND = "#7d4f50";
@@ -161,6 +162,8 @@ export default function GlobalInfoStep({ info, onChange, onNext, forms }) {
   const age = calcAge(info.dob, info.todayDate);
 
   const set = (key, value) => {
+    if (key === "phone") value = formatPhoneInput(value, info.phone);
+    if (key === "zip")   value = formatZipInput(value);
     onChange(key, value);
     if (errors[key]) setErrors(prev => ({ ...prev, [key]: "" }));
   };
@@ -179,6 +182,8 @@ export default function GlobalInfoStep({ info, onChange, onNext, forms }) {
     req("city",          "City is required.");
     req("state",         "State is required.");
     req("zip",           "Zip is required.");
+    if (info.phone?.trim() && !isValidPhone(info.phone)) e.phone = PHONE_ERROR;
+    if (info.zip?.trim()   && !isValidZip(info.zip))     e.zip   = ZIP_ERROR;
     if (info.email?.trim() && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(info.email.trim()))
       e.email = "Please enter a valid email.";
     if (info.dob) {

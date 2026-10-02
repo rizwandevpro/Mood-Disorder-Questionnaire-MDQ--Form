@@ -1,5 +1,7 @@
 "use client";
 
+import { formatPhoneInput, isValidPhone, formatZipInput, isValidZip, PHONE_ERROR, ZIP_ERROR } from "../utils/validators";
+
 import { useState } from "react";
 import { TQ_QUESTIONS, tqMultiKey } from "./triageSteps";
 
@@ -83,6 +85,7 @@ export function TriagePatientInfoStep({ answers, onChange, onNext }) {
     const e = {};
     if (!answers.ptqName?.trim())  e.ptqName  = "Full name is required.";
     if (!answers.ptqPhone?.trim()) e.ptqPhone = "Phone number is required.";
+    else if (!isValidPhone(answers.ptqPhone)) e.ptqPhone = PHONE_ERROR;
     if (!answers.ptqEmail?.trim()) e.ptqEmail = "Email address is required.";
     else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(answers.ptqEmail.trim()))
                                     e.ptqEmail = "Please enter a valid email.";
@@ -105,7 +108,7 @@ export function TriagePatientInfoStep({ answers, onChange, onNext }) {
         type={type}
         value={answers[key] || ""}
         placeholder={placeholder}
-        onChange={e => { onChange(key, e.target.value); setErrors(prev => ({ ...prev, [key]: "" })); }}
+        onChange={e => { onChange(key, type === "tel" ? formatPhoneInput(e.target.value, answers[key]) : e.target.value); setErrors(prev => ({ ...prev, [key]: "" })); }}
         style={inputStyle(errors[key])}
       />
       {errors[key] && <p style={{ fontSize: "12px", color: "#dc2626", marginTop: "4px", fontFamily: "'Source Sans 3', sans-serif" }}>{errors[key]}</p>}
