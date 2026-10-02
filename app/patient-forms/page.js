@@ -3,11 +3,11 @@
 // ─────────────────────────────────────────────────────────────────────────────
 // app/patient-forms/page.js   →   route: /patient-forms
 //
-// Unified sequential flow through 7 forms:
+// Unified sequential flow through 8 forms:
 //   Stage "info"  → Global Patient Info (GlobalInfoStep.js), prefilled into
 //                   every form via prefill.js
-//   Stage 0–6     → HIPAA+Intake, Health History, GAD-7, ASRS, PHQ-9, Brown,
-//                   Cancellation & No-Show Policy
+//   Stage 0–7     → HIPAA+Intake, Health History, GAD-7, ASRS, PHQ-9, Brown,
+//                   MDQ, Cancellation & No-Show Policy  (order = FORMS array)
 //   Stage "done"  → All PDFs merged → one download + one email
 //
 // KEY FIXES vs v1:
@@ -48,6 +48,10 @@ import BrownForm        from "../brown-scales/BrownForm";
 import BrownImageMapper from "../brown-scales/BrownImageMapper";
 import { THANKYOU_STEP as BROWN_THANKYOU } from "../brown-scales/brownSteps";
 
+import MDQForm        from "../mdq-form/MDQForm";
+import MDQImageMapper from "../mdq-form/MDQImageMapper";
+import { THANKYOU_STEP as MDQ_THANKYOU } from "../mdq-form/mdqSteps";
+
 import QuickConsentForm        from "../cancellation-no-show-policy/QuickConsentForm";
 import QuickConsentImageMapper from "../cancellation-no-show-policy/QuickConsentImageMapper";
 import { THANKYOU_STEP as CANCELLATION_THANKYOU } from "../cancellation-no-show-policy/quickConsentSteps";
@@ -60,9 +64,12 @@ const FORMS = [
   { id: "asrs",           label: "ASRS ADHD",        icon: "⚡" },
   { id: "phq9",           label: "PHQ-9 Depression", icon: "💙" },
   { id: "brown-scales",   label: "Brown Scales",     icon: "📋" },
+  { id: "mdq",            label: "MDQ Mood",         icon: "🌗" },
   { id: "cancellation",   label: "Cancellation Policy", icon: "📅" },
 ];
 const TOTAL_FORMS = FORMS.length;
+// Stage index of each form — derived from FORMS order, never hard-coded.
+const IDX = Object.fromEntries(FORMS.map((f, i) => [f.id, i]));
 
 // Single source of truth for merge order + names used in the email.
 const FORM_NAMES = {
@@ -72,6 +79,7 @@ const FORM_NAMES = {
   "asrs":           "ADHD Self-Report Scale (ASRS)",
   "phq9":           "Patient Health Questionnaire (PHQ-9)",
   "brown-scales":   "Brown Executive Function/Attention Scales",
+  "mdq":            "Mood Disorder Questionnaire (MDQ)",
   "cancellation":   "Cancellation & No-Show Policy",
 };
 
@@ -86,6 +94,7 @@ const INITIAL_STEPS = {
   "asrs":           1,
   "phq9":           1,
   "brown-scales":   1,
+  "mdq":            1,  // skip built-in info step 0 (prefilled)
   "cancellation":   0,  // step 0 = policy text — must be shown
 };
 const MIN_STEP = (formId) => INITIAL_STEPS[formId];
@@ -146,6 +155,9 @@ function SilentMapper({ formId, answers, info, onPdfReady }) {
       )}
       {formId === "brown-scales" && (
         <BrownImageMapper answers={answers} silentMode onPdfReady={onPdfReady} />
+      )}
+      {formId === "mdq" && (
+        <MDQImageMapper answers={answers} silentMode skipEmail onPdfReady={onPdfReady} />
       )}
       {formId === "cancellation" && (
         <QuickConsentImageMapper answers={answers} silentMode onPdfReady={onPdfReady} />
@@ -449,10 +461,10 @@ export default function PatientFormsPage() {
             <TransitionBanner completedIndex={transitionIdx} nextForm={transitionIdx + 1 < TOTAL_FORMS ? FORMS[transitionIdx + 1] : null} />
           )}
 
-          {/* ── FORM 0: HIPAA + Intake ── */}
-          {stage === 0 && !showTransition && (() => {
+          {/* ── HIPAA + Intake ── */}
+          {stage === IDX["hipaa-intake"] && !showTransition && (() => {
             if (hiStep === HIPAA_INTAKE_THANKYOU) {
-              scheduleComplete(0);
+              scheduleComplete(IDX["hipaa-intake"]);
               return null;
             }
             return (
@@ -479,10 +491,10 @@ export default function PatientFormsPage() {
             );
           })()}
 
-          {/* ── FORM 1: Health History ── */}
-          {stage === 1 && !showTransition && (() => {
+          {/* ── Health History ── */}
+          {stage === IDX["health-history"] && !showTransition && (() => {
             const step = formSteps["health-history"];
-            if (checkAndSchedule("health-history", 1, step, HH_THANKYOU_STEP)) return null;
+            if (checkAndSchedule("health-history", IDX["health-history"], step, HH_THANKYOU_STEP)) return null;
             return (
               <HealthHistoryForm
                 currentStep={step}
@@ -494,10 +506,10 @@ export default function PatientFormsPage() {
             );
           })()}
 
-          {/* ── FORM 2: GAD-7 ── */}
-          {stage === 2 && !showTransition && (() => {
+          {/* ── GAD-7 ── */}
+          {stage === IDX["gad7"] && !showTransition && (() => {
             const step = formSteps["gad7"];
-            if (checkAndSchedule("gad7", 2, step, GAD7_THANKYOU)) return null;
+            if (checkAndSchedule("gad7", IDX["gad7"], step, GAD7_THANKYOU)) return null;
             return (
               <GAD7Form
                 currentStep={step}
@@ -509,10 +521,10 @@ export default function PatientFormsPage() {
             );
           })()}
 
-          {/* ── FORM 3: ASRS ── */}
-          {stage === 3 && !showTransition && (() => {
+          {/* ── ASRS ── */}
+          {stage === IDX["asrs"] && !showTransition && (() => {
             const step = formSteps["asrs"];
-            if (checkAndSchedule("asrs", 3, step, ASRS_THANKYOU)) return null;
+            if (checkAndSchedule("asrs", IDX["asrs"], step, ASRS_THANKYOU)) return null;
             return (
               <ASRSForm
                 currentStep={step}
@@ -524,10 +536,10 @@ export default function PatientFormsPage() {
             );
           })()}
 
-          {/* ── FORM 4: PHQ-9 ── */}
-          {stage === 4 && !showTransition && (() => {
+          {/* ── PHQ-9 ── */}
+          {stage === IDX["phq9"] && !showTransition && (() => {
             const step = formSteps["phq9"];
-            if (checkAndSchedule("phq9", 4, step, PHQ9_THANKYOU)) return null;
+            if (checkAndSchedule("phq9", IDX["phq9"], step, PHQ9_THANKYOU)) return null;
             return (
               <PHQ9Form
                 currentStep={step}
@@ -539,10 +551,10 @@ export default function PatientFormsPage() {
             );
           })()}
 
-          {/* ── FORM 5: Brown Scales ── */}
-          {stage === 5 && !showTransition && (() => {
+          {/* ── Brown Scales ── */}
+          {stage === IDX["brown-scales"] && !showTransition && (() => {
             const step = formSteps["brown-scales"];
-            if (checkAndSchedule("brown-scales", 5, step, BROWN_THANKYOU)) return null;
+            if (checkAndSchedule("brown-scales", IDX["brown-scales"], step, BROWN_THANKYOU)) return null;
             return (
               <BrownForm
                 currentStep={step}
@@ -554,10 +566,25 @@ export default function PatientFormsPage() {
             );
           })()}
 
-          {/* ── FORM 6: Cancellation & No-Show Policy ── */}
-          {stage === 6 && !showTransition && (() => {
+          {/* ── MDQ — Mood Disorder Questionnaire ── */}
+          {stage === IDX["mdq"] && !showTransition && (() => {
+            const step = formSteps["mdq"];
+            if (checkAndSchedule("mdq", IDX["mdq"], step, MDQ_THANKYOU)) return null;
+            return (
+              <MDQForm
+                currentStep={step}
+                answers={getAnswers("mdq")}
+                onChange={(k, v) => handleChange("mdq", k, v)}
+                onNext={() => handleNext("mdq")}
+                onBack={() => handleBack("mdq")}
+              />
+            );
+          })()}
+
+          {/* ── Cancellation & No-Show Policy ── */}
+          {stage === IDX["cancellation"] && !showTransition && (() => {
             const step = formSteps["cancellation"];
-            if (checkAndSchedule("cancellation", 6, step, CANCELLATION_THANKYOU)) return null;
+            if (checkAndSchedule("cancellation", IDX["cancellation"], step, CANCELLATION_THANKYOU)) return null;
             return (
               <QuickConsentForm
                 currentStep={step}

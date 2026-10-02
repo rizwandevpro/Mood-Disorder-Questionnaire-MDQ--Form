@@ -40,7 +40,9 @@ const CANVAS_H = 1650;
 // ─── MDQImageMapper ───────────────────────────────────────────────────────────
 // New prop: onPdfReady(downloadFn) — called once the PDF has been built.
 // page.js stores that function and calls it when the user clicks Download.
-export default function MDQImageMapper({ answers, silentMode = false, onPdfReady }) {
+// skipEmail (combined /patient-forms flow): do NOT send the standalone MDQ
+// email — the combined flow merges this PDF with the others and sends once.
+export default function MDQImageMapper({ answers, silentMode = false, onPdfReady, skipEmail = false }) {
   const canvasRef              = useRef(null);
   const [status, setStatus]    = useState("loading");
   const [emailStatus, setEmailStatus] = useState("idle");
@@ -155,15 +157,10 @@ export default function MDQImageMapper({ answers, silentMode = false, onPdfReady
   };
 
   // ── Load jsPDF ──────────────────────────────────────────────────────────────
-  const loadJsPDF = () =>
-    new Promise((resolve, reject) => {
-      if (window.jspdf) { resolve(window.jspdf.jsPDF); return; }
-      const script   = document.createElement("script");
-      script.src     = "https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js";
-      script.onload  = () => resolve(window.jspdf.jsPDF);
-      script.onerror = () => reject(new Error("Failed to load jsPDF"));
-      document.head.appendChild(script);
-    });
+  // Bundled npm package (same as every other mapper) — previously a CDN
+  // <script>, which could fail on a patient's network and, in the combined
+  // flow, block the whole merged email.
+  const loadJsPDF = () => import("jspdf").then(({ jsPDF }) => jsPDF);
 
   // ── Build PDF — returns the jsPDF instance ──────────────────────────────────
   const buildPdf = async () => {
@@ -224,13 +221,13 @@ export default function MDQImageMapper({ answers, silentMode = false, onPdfReady
       try {
         const pdf = await buildPdf();
         if (!pdf) return;
-        // Email silently — no save()
-        await sendEmail(pdf);
-        // Give page.js a function it can call to trigger a download later
+        // Email silently — no save() (skipped in the combined flow)
+        if (!skipEmail) await sendEmail(pdf);
+        // Give page.js a download function + the PDF blob (combined flow merges the blob)
         if (onPdfReady) {
           onPdfReady(() => {
             pdf.save(`MDQ_${answers.name || "result"}_${answers.date || "form"}.pdf`);
-          });
+          }, pdf.output("blob"));
         }
       } catch (err) {
         console.error("Silent PDF failed:", err);

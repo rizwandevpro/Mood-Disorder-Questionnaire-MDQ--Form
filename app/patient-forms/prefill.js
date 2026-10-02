@@ -118,6 +118,15 @@ const MAP = {
     patientSex:    i.gender === "Male" ? "M" : i.gender === "Female" ? "F" : "",
   }),
 
+  // MDQ step 0 (its own info screen) is skipped in the combined flow
+  "mdq": (i, today) => ({
+    name:           i.fullName,
+    date:           today,
+    email:          i.email,
+    phone:          i.phone,
+    clinicLocation: i.location,
+  }),
+
   "cancellation": (i, today) => ({
     email:           i.email,
     patientInitials: initials(i),
