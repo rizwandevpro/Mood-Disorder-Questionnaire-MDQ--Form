@@ -43,20 +43,20 @@ const BROWN_CSS = `
                      border:1px solid #e2e8f0; background:white; white-space:nowrap; }
 
   /* Responsive breakpoints */
-  @media (max-width: 600px) {
-    .brwn-name-grid   { grid-template-columns:1fr 1fr; }
-    .brwn-date-grid   { grid-template-columns:1fr 1fr; }
-    .brwn-school-grid { grid-template-columns:1fr; }
+@media (max-width: 600px) {
+  .brwn-name-grid   { grid-template-columns:1fr 1fr; }
+  .brwn-date-grid   { grid-template-columns:1fr 1fr; }
+  .brwn-school-grid { grid-template-columns:1fr; }
 
-    /* Stack question row: text on top, options below */
-    .brwn-q-row       { flex-direction:column; gap:10px; }
-    .brwn-q-opts      { width:100%; justify-content:space-between; }
-    .brwn-opt-btn     { flex:1; max-width:64px; height:50px; font-size:16px; }
+  /* Stack question row: text on top, options below */
+  .brwn-q-row       { flex-direction:column; gap:10px; }
+  .brwn-q-opts      { width:100%; justify-content:space-between; }
+  .brwn-opt-btn     { flex:1; max-width:64px; height:50px; font-size:16px; }
 
-    /* Hide legend labels, show just letters */
-    .brwn-legend-label{ display:none; }
-    .brwn-legend-item { padding:4px 6px; }
-  }
+  /* Legend on mobile: show full labels in a 2x2 grid */
+  .brwn-legend      { display:grid; grid-template-columns:1fr 1fr; gap:6px; width:100%; }
+  .brwn-legend-item { padding:6px 8px; white-space:normal; text-align:left; }
+}
 
   @media (max-width: 380px) {
     .brwn-name-grid  { grid-template-columns:1fr; }
