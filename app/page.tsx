@@ -144,16 +144,35 @@ export default function HomePage() {
         {/* ── Main content ── */}
         <main style={{ maxWidth: "900px", margin: "0 auto", padding: "40px 24px 80px" }}>
 
+          {/* ── New patients: the one link (all forms + ID/insurance photos) ── */}
+          <Link
+            href="/patient-forms"
+            style={{ display: "block", textDecoration: "none", marginTop: "-72px", marginBottom: "36px", backgroundColor: "white", borderRadius: "20px", border: "2px solid #7d4f50", boxShadow: "0 12px 32px rgba(125,79,80,0.18)", padding: "26px 28px" }}
+          >
+            <p style={{ fontSize: "12px", fontWeight: 700, letterSpacing: "0.1em", textTransform: "uppercase", color: "#7d4f50", margin: "0 0 6px" }}>
+              New patient? Start here
+            </p>
+            <h2 style={{ fontSize: "clamp(20px, 3vw, 26px)", fontWeight: 700, color: "#0f172a", fontFamily: "'Lora', serif", margin: "0 0 8px", lineHeight: 1.3 }}>
+              Complete all new-patient paperwork in one go
+            </h2>
+            <p style={{ fontSize: "15px", color: "#475569", lineHeight: 1.6, margin: "0 0 18px" }}>
+              Consent forms, intake and questionnaires — plus a photo of your ID and insurance card taken with your phone. No printing, no scanner.
+            </p>
+            <span style={{ display: "inline-flex", alignItems: "center", gap: "8px", backgroundColor: "#7d4f50", color: "white", fontWeight: 700, fontSize: "16px", padding: "14px 26px", borderRadius: "12px" }}>
+              Start New Patient Forms →
+            </span>
+          </Link>
+
           {/* Section header */}
           <div style={{ marginBottom: "28px" }}>
             <div style={{ display: "flex", alignItems: "center", gap: "10px", marginBottom: "8px" }}>
               <div style={{ width: "4px", height: "24px", backgroundColor: "#7d4f50", borderRadius: "2px" }} />
               <h2 style={{ fontSize: "20px", fontWeight: 700, color: "#0f172a", fontFamily: "'Lora', serif", margin: 0 }}>
-                Complete Your Forms Online
+                Individual Forms
               </h2>
             </div>
             <p style={{ fontSize: "14px", color: "#64748b", lineHeight: 1.6, margin: "0 0 0 14px", paddingLeft: "10px" }}>
-              Select a form below. It opens in this app, takes a few minutes to complete, and submits automatically — no printing or uploading required.
+              Only need one specific form? Select it below. It opens in this app, takes a few minutes to complete, and submits automatically — no printing or uploading required.
             </p>
           </div>
 

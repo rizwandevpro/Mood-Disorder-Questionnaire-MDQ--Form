@@ -7,7 +7,8 @@ import { formatPhoneInput, isValidPhone, formatZipInput, isValidZip, PHONE_ERROR
 // ─────────────────────────────────────────────────────────────────────────────
 
 import { useState, useRef, useEffect, useCallback } from "react";
-import { INTAKE_STEPS } from "./intakeSteps";
+import { INTAKE_STEPS, DOCUMENT_SLOTS } from "./intakeSteps";
+import { compressImage } from "../utils/compressImage";
 
 const BRAND        = "#7d4f50";
 const BRAND_SHADOW = "0 8px 24px rgba(125,79,80,0.18)";
@@ -80,7 +81,12 @@ function validateStep(step, answers) {
   if (step.type === "fields")
     step.fields.forEach((f) => { const e = validateField(f.key, answers[f.key], f.required); if (e) errors[f.key] = e; });
   if (step.type === "insurance")
-    step.primaryFields.forEach((f) => { const e = validateField(f.key, answers[f.key], f.required); if (e) errors[f.key] = e; });
+    step.primaryFields.forEach((f) => { const e = validateField(f.key, answers[f.key], f.required && !answers.selfPay); if (e) errors[f.key] = e; });
+  if (step.type === "documents")
+    DOCUMENT_SLOTS.forEach((d) => {
+      if (d.insurance && answers.selfPay) return;
+      if (!answers[d.key]) errors[d.key] = "Please add this photo";
+    });
   if (step.type === "signature") {
     if (!answers.signature) errors.signature = "Please provide your signature";
     if (!answers.sigDate)   errors.sigDate   = "Please enter the date";
@@ -164,6 +170,97 @@ function StepFields({ step, answers, onChange, errors }) {
   );
 }
 
+// ── Step: documents (photo of ID + insurance card) ────────────────────────────
+// Photos are compressed on the device (utils/compressImage.js) and stored in
+// answers as JPEG data URLs. They are NOT drawn on the Intake form image —
+// they are emailed to the clinic as extra pages + attachments.
+function PhotoSlot({ slot, value, onChange, error }) {
+  const cameraRef  = useRef(null);
+  const galleryRef = useRef(null);
+  const [busy, setBusy] = useState(false);
+  const [msg,  setMsg]  = useState("");
+
+  const handleFile = async (e) => {
+    const file = e.target.files?.[0];
+    e.target.value = "";                       // allow picking the same file again
+    if (!file) return;
+    setBusy(true); setMsg("");
+    try {
+      const { dataUrl } = await compressImage(file);
+      onChange(slot.key, dataUrl);
+    } catch (err) {
+      setMsg(err.message || "Couldn't use that photo. Please try again.");
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const shown = msg || error;
+  const btn = (primary) => ({
+    flex:1, minWidth:"140px", display:"flex", alignItems:"center", justifyContent:"center", gap:"8px",
+    padding:"14px 12px", borderRadius:"12px", fontSize:"15px", fontWeight:600, cursor: busy ? "wait" : "pointer",
+    border: primary ? "none" : `2px solid ${BRAND}`, backgroundColor: primary ? BRAND : "white",
+    color: primary ? "white" : BRAND, fontFamily:"'Source Sans 3', sans-serif",
+  });
+
+  return (
+    <div style={{borderRadius:"16px",border:`2px solid ${shown ? "#fca5a5" : value ? "#bbf7d0" : "#e2e8f0"}`,padding:"16px",backgroundColor: value ? "#f0fdf4" : "white"}}>
+      <p style={{fontSize:"14px",fontWeight:700,color:"#1e293b",margin:"0 0 12px",fontFamily:"'Source Sans 3', sans-serif"}}>
+        {slot.label} <span style={{color:BRAND}}>*</span>
+      </p>
+
+      {value ? (
+        <div style={{display:"flex",alignItems:"center",gap:"14px",flexWrap:"wrap"}}>
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src={value} alt={slot.short} style={{width:"160px",maxWidth:"100%",height:"auto",borderRadius:"8px",border:"1px solid #e2e8f0",backgroundColor:"white"}} />
+          <div style={{display:"flex",flexDirection:"column",gap:"8px"}}>
+            <span style={{fontSize:"13px",fontWeight:600,color:"#16a34a",fontFamily:"'Source Sans 3', sans-serif"}}>✓ Photo added</span>
+            <button type="button" onClick={() => cameraRef.current?.click()} disabled={busy}
+              style={{...btn(false), flex:"none", minWidth:0, padding:"8px 14px", fontSize:"13px"}}>Retake</button>
+            <button type="button" onClick={() => onChange(slot.key, null)} disabled={busy}
+              style={{background:"none",border:"none",color:"#ef4444",fontSize:"13px",fontWeight:600,cursor:"pointer",padding:0,textAlign:"left",fontFamily:"'Source Sans 3', sans-serif"}}>Remove</button>
+          </div>
+        </div>
+      ) : busy ? (
+        <p style={{fontSize:"14px",color:"#64748b",margin:0,fontFamily:"'Source Sans 3', sans-serif"}}>Preparing photo…</p>
+      ) : (
+        <div style={{display:"flex",gap:"10px",flexWrap:"wrap"}}>
+          <button type="button" onClick={() => cameraRef.current?.click()}  style={btn(true)}>📷 Take photo</button>
+          <button type="button" onClick={() => galleryRef.current?.click()} style={btn(false)}>🖼️ Choose from photos</button>
+        </div>
+      )}
+
+      {/* capture="environment" opens the rear camera on phones; desktop falls back to a file picker */}
+      <input ref={cameraRef}  type="file" accept="image/*" capture="environment" style={{display:"none"}} onChange={handleFile} />
+      <input ref={galleryRef} type="file" accept="image/*"                        style={{display:"none"}} onChange={handleFile} />
+
+      {shown && <p style={{marginTop:"10px",marginBottom:0,fontSize:"13px",color:"#dc2626",fontFamily:"'Source Sans 3', sans-serif"}}>⚠ {shown}</p>}
+    </div>
+  );
+}
+
+function StepDocuments({ answers, onChange, errors }) {
+  const toggleSelfPay = () => {
+    const next = !answers.selfPay;
+    onChange("selfPay", next);
+    if (next) DOCUMENT_SLOTS.forEach(d => { if (d.insurance && answers[d.key]) onChange(d.key, null); });
+  };
+  return (
+    <div style={{display:"flex",flexDirection:"column",gap:"16px"}}>
+      {DOCUMENT_SLOTS.filter(d => !(d.insurance && answers.selfPay)).map(d => (
+        <PhotoSlot key={d.key} slot={d} value={answers[d.key]} onChange={onChange} error={errors?.[d.key]} />
+      ))}
+      <label style={{display:"flex",alignItems:"center",gap:"10px",cursor:"pointer",padding:"12px 14px",borderRadius:"12px",border:`2px solid ${answers.selfPay ? BRAND : "#e2e8f0"}`,backgroundColor: answers.selfPay ? "#fdf8f8" : "#f8fafc",fontFamily:"'Source Sans 3', sans-serif",fontSize:"14px",fontWeight:600,color:"#374151"}}>
+        <input type="checkbox" checked={!!answers.selfPay} onChange={toggleSelfPay} style={{width:"18px",height:"18px",accentColor:BRAND}} />
+        I don&apos;t have insurance / I will self-pay
+      </label>
+      <p style={{fontSize:"12px",color:"#94a3b8",margin:0,lineHeight:1.5,fontFamily:"'Source Sans 3', sans-serif"}}>
+        Tip: lay the card on a dark, flat surface with good light and fill the frame. Photos are only sent to our office.
+      </p>
+    </div>
+  );
+}
+
 // ── Step: insurance ───────────────────────────────────────────────────────────
 function StepInsurance({ step, answers, onChange, errors }) {
   const panelStyle = { borderRadius:"16px", border:"2px solid #e2e8f0", padding:"20px" };
@@ -171,9 +268,11 @@ function StepInsurance({ step, answers, onChange, errors }) {
   return (
     <div className="intake-ins-grid">
       <div style={panelStyle}>
-        <p style={titleStyle}>Primary Insurance <span style={{color:BRAND}}>*</span></p>
+        <p style={titleStyle}>Primary Insurance {answers.selfPay
+          ? <span style={{fontSize:"12px",fontWeight:400,color:"#94a3b8"}}>(optional — you selected self-pay)</span>
+          : <span style={{color:BRAND}}>*</span>}</p>
         <div style={{display:"flex",flexDirection:"column",gap:"12px"}}>
-          {step.primaryFields.map(f => <Field key={f.key} f={f} answers={answers} onChange={onChange} errors={errors} />)}
+          {step.primaryFields.map(f => <Field key={f.key} f={{ ...f, required: f.required && !answers.selfPay }} answers={answers} onChange={onChange} errors={errors} />)}
         </div>
       </div>
       <div style={panelStyle}>
@@ -282,9 +381,12 @@ function StepSignature({ step, answers, onChange, errors }) {
 }
 
 // ── Card ──────────────────────────────────────────────────────────────────────
-function findField(step, key) {
+function findField(step, key, answers) {
   if (step.type === "fields")    return step.fields?.find(f => f.key===key);
-  if (step.type === "insurance") return [...(step.primaryFields||[]),...(step.secondaryFields||[])].find(f => f.key===key);
+  if (step.type === "insurance") {
+    const f = [...(step.primaryFields||[]),...(step.secondaryFields||[])].find(f => f.key===key);
+    return f ? { ...f, required: f.required && !answers?.selfPay } : null;
+  }
   if (step.type === "signature") return key==="sigDate" ? {key:"sigDate",required:true} : null;
   return null;
 }
@@ -294,7 +396,7 @@ function Card({ step, answers, onChange, onNext, onBack, isFirst, isLast }) {
 
   const handleChange = (key, value) => {
     onChange(key, value);
-    if (errors[key]) { const field=findField(step,key); setErrors(p => ({...p, [key]: field ? validateField(key,value,field.required) : null})); }
+    if (errors[key]) { const field=findField(step,key,answers); setErrors(p => ({...p, [key]: field ? validateField(key,value,field.required) : null})); }
   };
   const handleNext = () => {
     const errs = validateStep(step, answers);
@@ -314,6 +416,7 @@ function Card({ step, answers, onChange, onNext, onBack, isFirst, isLast }) {
       <div style={{padding:"28px 32px"}}>
         {step.type==="fields"    && <StepFields    step={step} answers={answers} onChange={handleChange} errors={errors} />}
         {step.type==="insurance" && <StepInsurance step={step} answers={answers} onChange={handleChange} errors={errors} />}
+        {step.type==="documents" && <StepDocuments answers={answers} onChange={handleChange} errors={errors} />}
         {step.type==="signature" && <StepSignature step={step} answers={answers} onChange={handleChange} errors={errors} />}
       </div>
 

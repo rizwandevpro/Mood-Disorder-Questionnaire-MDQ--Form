@@ -27,6 +27,7 @@ import { INITIAL_INFO, buildFullName, withPrefill } from "./prefill";
 import HIPAAForm           from "../hipaa-intake/HIPAAForm";
 import IntakeForm          from "../hipaa-intake/IntakeForm";
 import CombinedImageMapper from "../hipaa-intake/CombinedImageMapper";
+import { INTAKE_THANKYOU_INDEX, DOCUMENT_SLOTS } from "../hipaa-intake/intakeSteps";
 
 import HealthHistoryForm        from "../health-history/HealthHistoryForm";
 import HealthHistoryImageMapper from "../health-history/HealthHistoryImageMapper";
@@ -46,6 +47,7 @@ import { THANKYOU_STEP as PHQ9_THANKYOU } from "../phq9/phq9Steps";
 
 import BrownForm        from "../brown-scales/BrownForm";
 import BrownImageMapper from "../brown-scales/BrownImageMapper";
+import { dataUrlToBlob } from "../utils/compressImage";
 import { THANKYOU_STEP as BROWN_THANKYOU } from "../brown-scales/brownSteps";
 
 import MDQForm        from "../mdq-form/MDQForm";
@@ -101,7 +103,9 @@ const MIN_STEP = (formId) => INITIAL_STEPS[formId];
 
 // HIPAA+Intake internal step config (matches original hipaa-intake/page.js)
 const HIPAA_STEPS              = 2;   // globalStep 0–1 = HIPAAForm
-const HIPAA_INTAKE_THANKYOU    = 9;   // globalStep 9 = done
+// Derived from the Intake step list (was hard-coded 9 — adding the Photo ID
+// step would have made the Intake signature step count as "done").
+const HIPAA_INTAKE_THANKYOU    = HIPAA_STEPS + INTAKE_THANKYOU_INDEX;
 
 // ── Transition banner ─────────────────────────────────────────────────────────
 function TransitionBanner({ completedIndex, nextForm }) {
@@ -190,6 +194,7 @@ export default function PatientFormsPage() {
   const blobsRef     = useRef({});
   const emailSentRef = useRef(false);
   const cancellationEmailRef = useRef(""); // fresh value for async mergeAndSend
+  const intakeDocsRef        = useRef({}); // ID/insurance photos + selfPay, fresh for mergeAndSend
   const prefillCache = useRef({});
 
   // Final state
@@ -255,12 +260,6 @@ export default function PatientFormsPage() {
     const currentInfo = infoRef.current;
 
     try {
-      const toBase64 = (blob) => new Promise(resolve => {
-        const r = new FileReader();
-        r.onload = () => resolve(r.result.split(",")[1]);
-        r.readAsDataURL(blob);
-      });
-
       const formOrder = FORMS.map(f => f.id);
       const formNames = FORM_NAMES;
 
@@ -289,27 +288,41 @@ export default function PatientFormsPage() {
       console.log("[unified] merged PDF ready for download");
 
       // ── Step 2: Send email via API (non-blocking for download) ────────────
-      const attachments = await Promise.all(
-        formOrder.map(async id => ({
-          formName: formNames[id],
-          base64:   await toBase64(blobsRef.current[id]),
-          fileName: `${name.replace(/\s+/g, "_")}_${id}.pdf`,
-        }))
-      );
-
-      const res = await fetch("/api/merge-pdf", {
-        method:  "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          attachments,
-          patientName:    name,
-          // Global email first; fall back to the email typed on the Cancellation
-          // Policy step (that step requires one and promises a copy to it).
-          patientEmail:   currentInfo.email?.trim() || cancellationEmailRef.current || "",
-          patientPhone:   currentInfo.phone || "",
-          clinicLocation: currentInfo.location || "",
-        }),
+      // Raw binary multipart, NOT base64 JSON: Vercel caps a request at 4.5 MB
+      // and base64 adds 33%. 8 forms (~2.9 MB) + 3 photos (≤ 0.9 MB) fit;
+      // the same data as base64 JSON would not.
+      const safeName = name.replace(/[^\w\-]+/g, "_");
+      const docs     = intakeDocsRef.current;
+      const fd       = new FormData();
+      const meta     = {
+        patientName:    name,
+        // Global email first; fall back to the email typed on the Cancellation
+        // Policy step (that step requires one and promises a copy to it).
+        patientEmail:   currentInfo.email?.trim() || cancellationEmailRef.current || "",
+        patientPhone:   currentInfo.phone || "",
+        clinicLocation: currentInfo.location || "",
+        selfPay:        docs.selfPay,
+        forms:          [],
+        documents:      [],
+      };
+      formOrder.forEach((id, i) => {
+        const field = `form_${i}`;
+        fd.append(field, blobsRef.current[id], `${safeName}_${id}.pdf`);
+        meta.forms.push({ field, formName: formNames[id], fileName: `${safeName}_${id}.pdf` });
       });
+      DOCUMENT_SLOTS.forEach((d, i) => {
+        if (d.insurance && docs.selfPay) return;
+        const dataUrl = docs[d.key];
+        if (!dataUrl) return;
+        const field    = `doc_${i}`;
+        const fileName = `${safeName}_${d.key.replace(/^doc/, "")}.jpg`;
+        fd.append(field, dataUrlToBlob(dataUrl), fileName);
+        meta.documents.push({ field, label: d.short, fileName });
+      });
+      fd.append("meta", JSON.stringify(meta));
+
+      // No Content-Type header: the browser sets the multipart boundary.
+      const res = await fetch("/api/merge-pdf", { method: "POST", body: fd });
 
       const data = await res.json();
       if (data.success) {
@@ -392,6 +405,10 @@ export default function PatientFormsPage() {
   const hipaaIntakeAnswers  = getAnswers("hipaa-intake");
   const cancellationAnswers = getAnswers("cancellation");
   cancellationEmailRef.current = (cancellationAnswers.email || "").trim();
+  intakeDocsRef.current = {
+    selfPay: !!hipaaIntakeAnswers.selfPay,
+    ...Object.fromEntries(DOCUMENT_SLOTS.map(d => [d.key, hipaaIntakeAnswers[d.key] || null])),
+  };
 
   const headerLabel = stage === "info" ? "Patient Information"
     : stage === "done"                 ? "All Forms Complete"

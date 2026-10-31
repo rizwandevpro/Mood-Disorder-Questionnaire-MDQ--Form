@@ -1,15 +1,19 @@
 // ─────────────────────────────────────────────────────────────────────────────
 // intakeSteps.js — pure data for New Patient Intake Form
 //
-// STEP STRUCTURE (8 steps total):
+// STEP STRUCTURE (9 steps total):
 //   Step 0  — personal     (Last Name, First Name, M.I., DOB, Gender, Address, Apt#)
 //   Step 1  — location     (City, State, Zip, Marital Status)
 //   Step 2  — contact      (Cell Phone, Home Phone, Email)
 //   Step 3  — demographics (Pharmacy, Race, Ethnicity, Primary Language)
-//   Step 4  — emergency    (Full Name, Telephone, Relation)
-//   Step 5  — insurance    (Primary + Secondary Insurance)
-//   Step 6  — signature    (Signature pad + Date)
-//   Step 7  — thankyou
+//   Step 4  — documents    (Photo of driver's license + insurance card front/back)
+//   Step 5  — emergency    (Full Name, Telephone, Relation)
+//   Step 6  — insurance    (Primary + Secondary Insurance — optional if self-pay)
+//   Step 7  — signature    (Signature pad + Date)
+//   Step 8  — thankyou
+//
+// Step indices are never hard-coded elsewhere: pages derive the thank-you
+// step from INTAKE_THANKYOU_INDEX below.
 // ─────────────────────────────────────────────────────────────────────────────
 
 export const INTAKE_STEPS = [
@@ -78,7 +82,15 @@ export const INTAKE_STEPS = [
     ],
   },
 
-  // ── Step 4: Emergency Contact ─────────────────────────────────────────────
+  // ── Step 4: Photo ID & Insurance Card (photos, not drawn on the form) ────
+  {
+    id: "documents",
+    type: "documents",
+    title: "Photo ID & Insurance Card",
+    subtitle: "Take a clear photo of each card, or choose one from your phone. No scanner needed.",
+  },
+
+  // ── Step 5: Emergency Contact ─────────────────────────────────────────────
   {
     id: "emergency",
     type: "fields",
@@ -91,7 +103,7 @@ export const INTAKE_STEPS = [
     ],
   },
 
-  // ── Step 5: Insurance ─────────────────────────────────────────────────────
+  // ── Step 6: Insurance ─────────────────────────────────────────────────────
   {
     id: "insurance",
     type: "insurance",
@@ -113,7 +125,7 @@ export const INTAKE_STEPS = [
     ],
   },
 
-  // ── Step 6: Signature ─────────────────────────────────────────────────────
+  // ── Step 7: Signature ─────────────────────────────────────────────────────
   {
     id: "signature",
     type: "signature",
@@ -122,7 +134,7 @@ export const INTAKE_STEPS = [
     text: "I hereby authorize Livewell Medical Clinic to treat the patient named above. I authorize the release of medical information necessary to insurance claims concerning my illness and treatment. Photocopies are valid as original. I authorize payment of medical benefits to be directly to Livewell Medical Clinic. I understand that I am financially responsible for any amounts not covered by my health insurance.",
   },
 
-  // ── Step 7: Thank You ─────────────────────────────────────────────────────
+  // ── Step 8: Thank You ─────────────────────────────────────────────────────
   {
     id: "thankyou",
     type: "thankyou",
@@ -131,3 +143,15 @@ export const INTAKE_STEPS = [
 
 export const INTAKE_TOTAL_STEPS  = INTAKE_STEPS.length;                                    // 8
 export const INTAKE_THANKYOU_STEP = INTAKE_STEPS.findIndex((s) => s.type === "thankyou");  // 7
+
+
+// ── Photo upload slots (documents step) ─────────────────────────────────────
+// key = answers key holding the compressed JPEG data URL.
+// insurance: true → not required when the patient checks "self-pay".
+export const DOCUMENT_SLOTS = [
+  { key: "docIdFront",  label: "Driver's License or State ID — Front", short: "Photo ID (front)",        insurance: false },
+  { key: "docInsFront", label: "Insurance Card — Front",               short: "Insurance card (front)",  insurance: true  },
+  { key: "docInsBack",  label: "Insurance Card — Back",                short: "Insurance card (back)",   insurance: true  },
+];
+
+export const INTAKE_THANKYOU_INDEX = INTAKE_STEPS.findIndex((s) => s.type === "thankyou");

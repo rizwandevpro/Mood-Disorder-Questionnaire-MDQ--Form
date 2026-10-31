@@ -14,10 +14,11 @@
 //   3 → IntakeForm step 1 (Location)
 //   4 → IntakeForm step 2 (Contact)
 //   5 → IntakeForm step 3 (Demographics)
-//   6 → IntakeForm step 4 (Emergency)
-//   7 → IntakeForm step 5 (Insurance)
-//   8 → IntakeForm step 6 (Signature)
-//   9 → Thank You
+//   6 → IntakeForm step 4 (Photo ID & Insurance Card)
+//   7 → IntakeForm step 5 (Emergency)
+//   8 → IntakeForm step 6 (Insurance)
+//   9 → IntakeForm step 7 (Signature)
+//  10 → Thank You   (derived: HIPAA_STEPS + INTAKE_THANKYOU_INDEX)
 //
 // Files needed in same folder:
 //   HIPAAForm.js, hipaaSteps.js
@@ -31,12 +32,15 @@ import Image from "next/image";
 import HIPAAForm        from "./HIPAAForm";
 import IntakeForm        from "./IntakeForm";
 import CombinedImageMapper from "./CombinedImageMapper";
+import { INTAKE_THANKYOU_INDEX, DOCUMENT_SLOTS } from "./intakeSteps";
 
 // ── Constants ─────────────────────────────────────────────────────────────────
-const TOTAL_GLOBAL_STEPS = 10;   // steps 0..8 = form steps, step 9 = thank you
-const THANKYOU_STEP      = 9;
+// Derived from the step lists — never hard-coded (adding the Photo ID step
+// would otherwise make the Intake signature step count as "done").
 const HIPAA_STEPS        = 2;    // global 0..1 belong to HIPAA
-// global 2..8 belong to Intake (intake step = global - 2)
+const THANKYOU_STEP      = HIPAA_STEPS + INTAKE_THANKYOU_INDEX;   // = 10
+const TOTAL_GLOBAL_STEPS = THANKYOU_STEP + 1;
+// global 2..(THANKYOU_STEP-1) belong to Intake (intake step = global - 2)
 
 const SECTION_LABELS = [
   // HIPAA section
@@ -47,6 +51,7 @@ const SECTION_LABELS = [
   { label: "Location",     section: "Intake" },
   { label: "Contact",      section: "Intake" },
   { label: "Demographics", section: "Intake" },
+  { label: "ID & Card",    section: "Intake" },
   { label: "Emergency",    section: "Intake" },
   { label: "Insurance",    section: "Intake" },
   { label: "Signature",    section: "Intake" },
@@ -347,6 +352,15 @@ export default function HIPAAIntakePage() {
                             clinicLocation: answers.clinicLocation || "",
                             fileName:       "Cambridge-Psychiatry-HIPAA-and-Intake.pdf",
                             formName:       "HIPAA Consent & Patient Intake",
+                            // ID / insurance photos — clinic email only (see send-forms)
+                            selfPay:        !!answers.selfPay,
+                            documents:      DOCUMENT_SLOTS
+                              .filter(d => answers[d.key] && !(d.insurance && answers.selfPay))
+                              .map(d => ({
+                                label:    d.short,
+                                fileName: `${(patientName || "Patient").replace(/[^\w\-]+/g, "_")}_${d.key.replace(/^doc/, "")}.jpg`,
+                                base64:   answers[d.key].split(",")[1],
+                              })),
                           }),
                         });
                       })

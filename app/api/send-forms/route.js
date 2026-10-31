@@ -18,7 +18,13 @@ const FROM_REPLY  = "Cambridge Psychiatry <reports@cambridgemich.com>";
 export async function POST(req) {
   try {
     const body = await req.json();
-    const { pdfBase64, patientEmail, patientName, patientPhone, fileName, formName, clinicLocation } = body;
+    const { pdfBase64, patientEmail, patientName, patientPhone, fileName, formName, clinicLocation, selfPay } = body;
+
+    // Optional ID / insurance photos (HIPAA+Intake page). CLINIC EMAIL ONLY.
+    // [{ label, fileName, base64 }] — JPEG, ≤ ~300 KB each from the client.
+    const documents = (Array.isArray(body.documents) ? body.documents : []).slice(0, 3)
+      .map(d => ({ label: String(d.label || "Document"), fileName: String(d.fileName || "document.jpg").replace(/[^\w.\-]+/g, "_"), content: Buffer.from(String(d.base64 || ""), "base64") }))
+      .filter(d => d.content.length > 3 && d.content.length <= 1024 * 1024 && d.content[0] === 0xff && d.content[1] === 0xd8);
     const displayForm     = formName      || "Patient Form";
     const displayLocation = clinicLocation || "";
     const displayName     = patientName   || "Patient";
@@ -58,7 +64,13 @@ export async function POST(req) {
             <tr><td style="padding:6px 0;color:#64748b;">Form</td>
                 <td style="padding:6px 0;">${displayForm}</td></tr>
           </table>
-          <p style="margin:16px 0 0;font-size:13px;color:#94a3b8;">The completed PDF report is attached.</p>
+          ${documents.length || selfPay ? `
+          <div style="margin:16px 0 0;padding:14px;background:white;border:1px solid #e2e8f0;border-radius:8px;">
+            <p style="margin:0 0 8px;font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:0.06em;color:#94a3b8;">ID &amp; Insurance Photos</p>
+            ${documents.map(d => `<div style="font-size:13px;color:#374151;padding:3px 0;">✓ ${d.label}</div>`).join("")}
+            ${selfPay ? `<p style="margin:8px 0 0;font-size:13px;color:#b45309;font-weight:600;">Patient selected: no insurance / self-pay</p>` : ""}
+          </div>` : ""}
+          <p style="margin:16px 0 0;font-size:13px;color:#94a3b8;">The completed PDF report is attached${documents.length ? ", along with the ID/insurance photos" : ""}.</p>
         </div>
       </div>`;
 
@@ -88,7 +100,9 @@ export async function POST(req) {
                   <td style="padding:5px 0;font-weight:600;">${displayLocation}</td></tr>` : ""}
             </table>
           </div>
-          <p style="margin:0 0 12px;font-size:14px;">Please bring a copy of your insurance card to your first appointment.</p>
+          <p style="margin:0 0 12px;font-size:14px;">${documents.length
+            ? "We also received the photo(s) of your ID and insurance card. For your privacy, they are not included in this email."
+            : "Please bring a copy of your insurance card to your first appointment."}</p>
           <p style="margin:0 0 12px;font-size:13px;color:#94a3b8;">If you have any questions, please contact our office directly.</p>
           <p style="margin:0;font-size:12px;color:#cbd5e1;">Can't find this email? Please check your spam or junk folder.</p>
         </div>
@@ -101,7 +115,7 @@ export async function POST(req) {
         to:          CLINIC_EMAIL,
         subject:     `New Patient Forms — ${displayLocation ? displayLocation + " — " : ""}${displayForm} — ${displayName}`,
         html:        clinicHtml,
-        attachments: [attachment],
+        attachments: [attachment, ...documents.map(d => ({ filename: d.fileName, content: d.content }))],
       }),
     ];
 
@@ -118,7 +132,10 @@ export async function POST(req) {
       );
     }
 
-    await Promise.all(sends);
+    // Resend returns { error } instead of throwing — treat it as a failure.
+    const results = await Promise.all(sends);
+    const failed  = results.find(r => r && r.error);
+    if (failed) throw new Error(failed.error.message || "Email provider rejected the message");
 
     return NextResponse.json({
       success: true,
