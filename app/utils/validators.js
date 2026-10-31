@@ -79,3 +79,37 @@ export function oneOfLetters(v, allowed = "MF") {
   const c = String(v ?? "").toUpperCase().replace(new RegExp(`[^${allowed}]`, "g"), "");
   return c.slice(-1);
 }
+
+// ── Date of birth ───────────────────────────────────────────────────────────
+// Minimum patient age (clinic decision: 17+). Change here only — used by the
+// intro screen, the Intake DOB, and the date-picker limit.
+export const MIN_PATIENT_AGE = 17;
+export const MAX_PATIENT_AGE = 120;
+
+function localISO(d = new Date()) {
+  const p = (n) => String(n).padStart(2, "0");
+  return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}`;
+}
+function ageOn(dobISO, todayISO) {
+  const [by, bm, bd] = dobISO.split("-").map(Number);
+  const [ty, tm, td] = todayISO.split("-").map(Number);
+  let a = ty - by;
+  if (tm < bm || (tm === bm && td < bd)) a -= 1;
+  return a;
+}
+// Latest allowed birth date (today minus MIN_PATIENT_AGE years) — for <input max=…>
+export function maxDobISO(today = localISO()) {
+  const [y, m, d] = today.split("-");
+  return `${Number(y) - MIN_PATIENT_AGE}-${m}-${d}`;
+}
+// Returns an error string or null. "YYYY-MM-DD" input (from <input type="date">).
+export function dobError(dobISO, today = localISO()) {
+  const v = String(dobISO || "").trim();
+  if (!v) return null;
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(v)) return "Please enter a valid date of birth.";
+  if (v > today) return "Date of birth can't be in the future.";
+  const a = ageOn(v, today);
+  if (a < MIN_PATIENT_AGE) return `Our clinic sees patients ${MIN_PATIENT_AGE} and older. Please check the date of birth, or call our office.`;
+  if (a > MAX_PATIENT_AGE) return "Please check the year of birth.";
+  return null;
+}

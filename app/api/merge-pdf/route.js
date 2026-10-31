@@ -19,7 +19,7 @@
 // WHO GETS WHAT
 //   Clinic:  merged PDF only (forms + photo pages) + each photo JPG
 //            (no individual form PDFs — clinic asked for the merged PDF only)
-//   Patient: merged PDF (forms only)           + each form PDF  — no ID/insurance photos
+//   Patient: merged PDF only (forms only) — no individual PDFs, no ID/insurance photos
 //
 // Required .env variables:
 //   RESEND_API_KEY
@@ -146,14 +146,13 @@ export async function POST(req) {
     const patientMerged = documents.length ? await buildMerged(forms, [], displayName) : clinicMerged;
     const mergedFileName = `${baseName}_Cambridge_Psychiatry_All_Forms.pdf`;
 
-    const formAttachments = forms.map((f) => ({ filename: f.fileName, content: f.content }));
     const clinicAttachments = [
       { filename: mergedFileName, content: clinicMerged },
       ...documents.map((d) => ({ filename: d.fileName, content: d.content })),
     ];
+    // Patient gets the merged PDF only (no individual form PDFs, no ID photos)
     const patientAttachments = [
       { filename: mergedFileName, content: patientMerged },
-      ...formAttachments,
     ];
 
     const row = (label, value, bold) => value
@@ -213,7 +212,7 @@ export async function POST(req) {
           <p style="margin:0 0 12px;">Dear ${esc(displayName)},</p>
           <p style="margin:0 0 16px;">
             Thank you for completing your intake forms. All ${forms.length} forms have been received successfully.
-            A combined PDF and individual copies are attached to this email for your records.
+            A single PDF with all your completed forms is attached to this email for your records.
           </p>
 
           <div style="background:white;border:1px solid #e2e8f0;border-radius:8px;padding:16px;margin-bottom:16px;">

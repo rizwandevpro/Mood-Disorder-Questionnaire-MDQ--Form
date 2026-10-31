@@ -9,7 +9,7 @@
 // ─────────────────────────────────────────────────────────────────────────────
 
 import { useState, useEffect, useRef } from "react";
-import { formatPhoneInput, isValidPhone, formatZipInput, isValidZip, PHONE_ERROR, ZIP_ERROR } from "../utils/validators";
+import { formatPhoneInput, isValidPhone, formatZipInput, isValidZip, PHONE_ERROR, ZIP_ERROR, dobError, maxDobISO } from "../utils/validators";
 import { GENDER_OPTIONS, MARITAL_OPTIONS, todayISO, calcAge } from "./prefill";
 
 const BRAND = "#7d4f50";
@@ -187,9 +187,8 @@ export default function GlobalInfoStep({ info, onChange, onNext, forms }) {
     if (info.email?.trim() && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(info.email.trim()))
       e.email = "Please enter a valid email.";
     if (info.dob) {
-      const a = Number(calcAge(info.dob, todayISO()));
-      if (info.dob > todayISO())       e.dob = "Date of birth cannot be in the future.";
-      else if (!(a >= 0 && a <= 120))  e.dob = "Please check the date of birth.";
+      const dErr = dobError(info.dob, todayISO());   // future, under 18, over 120
+      if (dErr) e.dob = dErr;
     }
     if (!info.signature) e.signature = "Please sign above.";
     return e;
@@ -285,7 +284,7 @@ export default function GlobalInfoStep({ info, onChange, onNext, forms }) {
 
         {section("Personal")}
         {grid(160, <>
-          {input("dob", "Date of Birth", { type: "date", max: info.todayDate || undefined })}
+          {input("dob", "Date of Birth", { type: "date", max: maxDobISO(info.todayDate || undefined), min: "1900-01-01" })}
           {readOnly("Age", age !== "" ? age : "—")}
           {readOnly("Today's Date", fmtUS(info.todayDate))}
         </>)}

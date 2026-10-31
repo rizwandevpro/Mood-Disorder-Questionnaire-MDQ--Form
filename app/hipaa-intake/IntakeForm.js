@@ -1,6 +1,6 @@
 "use client";
 
-import { formatPhoneInput, isValidPhone, formatZipInput, isValidZip, PHONE_ERROR, ZIP_ERROR } from "../utils/validators";
+import { formatPhoneInput, isValidPhone, formatZipInput, isValidZip, PHONE_ERROR, ZIP_ERROR, dobError } from "../utils/validators";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // IntakeForm.js — New Patient Intake Form UI
@@ -72,6 +72,7 @@ function validateField(key, value, required) {
   if (key === "email" && v && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v))
     return "Please enter a valid email address";
   if (PHONE_KEYS.includes(key) && v && !isValidPhone(v)) return PHONE_ERROR;
+  if (key === "dob" && v) { const e = dobError(v); if (e) return e; }
   if (key === "zip" && v && !isValidZip(v)) return ZIP_ERROR;
   return null;
 }

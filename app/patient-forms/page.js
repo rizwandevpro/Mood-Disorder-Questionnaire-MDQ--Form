@@ -541,7 +541,21 @@ export default function PatientFormsPage() {
     a.click();
   };
 
+  // "Delete my answers from this device" (footer) → confirm → wipe + blank start
+  const [confirmClear, setConfirmClear] = useState(false);
+  const [clearedNotice, setClearedNotice] = useState(false);
+  const [resetKey, setResetKey] = useState(0);     // remounts the intro (clears its signature pad)
+  const clearMyAnswers = () => {
+    handleReset();
+    setConfirmClear(false);
+    setClearedNotice(true);
+  };
+
   const handleReset = () => {
+    clearTimeout(transitionTimerRef.current);
+    transitionAdvanceRef.current = null;
+    setClearedNotice(false);
+    setResetKey(k => k + 1);
     setStage("info");
     setInfo(INITIAL_INFO);
     infoRef.current = INITIAL_INFO;
@@ -670,8 +684,13 @@ export default function PatientFormsPage() {
           {stage === "info" && resumeOffer && (
             <ResumeCard saved={resumeOffer} onContinue={resumeSaved} onFresh={discardSaved} />
           )}
+          {stage === "info" && clearedNotice && (
+            <div role="status" style={{ maxWidth: "620px", margin: "0 auto 16px", backgroundColor: "#ecf6f0", border: "1px solid #b7dfc8", borderRadius: "12px", padding: "12px 16px", fontSize: "15px", color: "#1d5c3f" }}>
+              ✓ Your answers were deleted from this device. You can start again here, or on another device.
+            </div>
+          )}
           {stage === "info" && restored && !resumeOffer && (
-            <GlobalInfoStep forms={FORMS} info={info} onChange={handleInfoChange} onNext={() => { setStage(0); window.scrollTo({ top: 0, behavior: "smooth" }); }} />
+            <GlobalInfoStep key={resetKey} forms={FORMS} info={info} onChange={handleInfoChange} onNext={() => { setStage(0); window.scrollTo({ top: 0, behavior: "smooth" }); }} />
           )}
 
           {/* Transition banner */}
@@ -829,6 +848,39 @@ export default function PatientFormsPage() {
               />
             );
           })}
+
+          {/* ── Saved-on-this-device footer: delete option ── */}
+          {restored && !resumeOffer && stage !== "done" && (stage !== "info" || info.firstName || info.lastName) && (
+            <div style={{ maxWidth: "620px", margin: "28px auto 0", textAlign: "center" }}>
+              {!confirmClear ? (
+                <p style={{ fontSize: "14px", color: "#4b5563", margin: 0, lineHeight: 1.6 }}>
+                  🔒 Your answers are saved on this device only.{" "}
+                  <button type="button" onClick={() => setConfirmClear(true)}
+                    style={{ minHeight: "auto", background: "none", border: "none", padding: 0, color: "#7d4f50", fontSize: "14px", fontWeight: 600, textDecoration: "underline", cursor: "pointer" }}>
+                    Delete my answers from this device
+                  </button>
+                </p>
+              ) : (
+                <div role="alertdialog" aria-labelledby="pf-clear-title" style={{ backgroundColor: "white", border: "1px solid #f1c9c9", borderRadius: "16px", padding: "20px", textAlign: "left" }}>
+                  <p id="pf-clear-title" style={{ fontSize: "16px", fontWeight: 700, color: "#0b1c30", margin: "0 0 6px" }}>Delete all your answers from this device?</p>
+                  <p style={{ fontSize: "14px", color: "#374151", margin: "0 0 14px", lineHeight: 1.6 }}>
+                    Everything you&apos;ve entered so far, including your signature and ID/insurance photos, will be permanently removed from this device. Nothing has been sent to our office yet.
+                    Answers can&apos;t be moved to another device, so if you want to use a different phone or computer, you&apos;ll start over there.
+                  </p>
+                  <div style={{ display: "flex", gap: "10px", flexWrap: "wrap" }}>
+                    <button type="button" onClick={clearMyAnswers}
+                      style={{ flex: "1 1 180px", padding: "12px 16px", borderRadius: "12px", border: "none", backgroundColor: "#b42318", color: "white", fontSize: "15px", fontWeight: 700, cursor: "pointer" }}>
+                      Yes, delete everything
+                    </button>
+                    <button type="button" onClick={() => setConfirmClear(false)}
+                      style={{ flex: "1 1 140px", padding: "12px 16px", borderRadius: "12px", border: "1px solid #d6dce4", backgroundColor: "white", color: "#374151", fontSize: "15px", fontWeight: 600, cursor: "pointer" }}>
+                      Keep my answers
+                    </button>
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
 
           {/* ── Final screen ── */}
           {stage === "done" && !showTransition && (() => {
