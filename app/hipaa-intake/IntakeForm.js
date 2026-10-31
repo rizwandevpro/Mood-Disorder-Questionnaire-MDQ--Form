@@ -117,14 +117,14 @@ function Field({ f, answers, onChange, errors }) {
   return (
     <div>
       <label style={{
-        display:"block", fontSize:"10px", fontWeight:700,
+        display:"block", fontSize:"12px", fontWeight:700,
         textTransform:"uppercase", letterSpacing:"0.1em",
         marginBottom:"6px", fontFamily:"'Source Sans 3', sans-serif",
-        color: err ? "#dc2626" : "#94a3b8",
+        color: err ? "#dc2626" : "#5b6475",
       }}>
         {f.label}
         {f.required  && <span style={{color:BRAND}}> *</span>}
-        {!f.required && <span style={{textTransform:"none",letterSpacing:"normal",fontWeight:400,color:"#cbd5e1"}}> (optional)</span>}
+        {!f.required && <span style={{textTransform:"none",letterSpacing:"normal",fontWeight:400,color:"#6b7280"}}> (optional)</span>}
       </label>
 
       {f.type === "select" ? (
@@ -146,7 +146,7 @@ function Field({ f, answers, onChange, errors }) {
       )}
 
       {err && (
-        <p style={{marginTop:"4px",fontSize:"12px",color:"#ef4444",display:"flex",alignItems:"center",gap:"4px",fontFamily:"'Source Sans 3', sans-serif"}}>
+        <p style={{marginTop:"4px",fontSize:"13px",color:"#ef4444",display:"flex",alignItems:"center",gap:"4px",fontFamily:"'Source Sans 3', sans-serif"}}>
           <svg width="12" height="12" fill="currentColor" viewBox="0 0 20 20">
             <path fillRule="evenodd" d="M18 10A8 8 0 11 2 10a8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clipRule="evenodd"/>
           </svg>
@@ -222,7 +222,7 @@ function PhotoSlot({ slot, value, onChange, error }) {
           </div>
         </div>
       ) : busy ? (
-        <p style={{fontSize:"14px",color:"#64748b",margin:0,fontFamily:"'Source Sans 3', sans-serif"}}>Preparing photo…</p>
+        <p style={{fontSize:"14px",color:"#4b5563",margin:0,fontFamily:"'Source Sans 3', sans-serif"}}>Preparing photo…</p>
       ) : (
         <div style={{display:"flex",gap:"10px",flexWrap:"wrap"}}>
           <button type="button" onClick={() => cameraRef.current?.click()}  style={btn(true)}>📷 Take photo</button>
@@ -254,7 +254,7 @@ function StepDocuments({ answers, onChange, errors }) {
         <input type="checkbox" checked={!!answers.selfPay} onChange={toggleSelfPay} style={{width:"18px",height:"18px",accentColor:BRAND}} />
         I don&apos;t have insurance / I will self-pay
       </label>
-      <p style={{fontSize:"12px",color:"#94a3b8",margin:0,lineHeight:1.5,fontFamily:"'Source Sans 3', sans-serif"}}>
+      <p style={{fontSize:"13px",color:"#5b6475",margin:0,lineHeight:1.5,fontFamily:"'Source Sans 3', sans-serif"}}>
         Tip: lay the card on a dark, flat surface with good light and fill the frame. Photos are only sent to our office.
       </p>
     </div>
@@ -269,14 +269,14 @@ function StepInsurance({ step, answers, onChange, errors }) {
     <div className="intake-ins-grid">
       <div style={panelStyle}>
         <p style={titleStyle}>Primary Insurance {answers.selfPay
-          ? <span style={{fontSize:"12px",fontWeight:400,color:"#94a3b8"}}>(optional — you selected self-pay)</span>
+          ? <span style={{fontSize:"13px",fontWeight:400,color:"#5b6475"}}>(optional — you selected self-pay)</span>
           : <span style={{color:BRAND}}>*</span>}</p>
         <div style={{display:"flex",flexDirection:"column",gap:"12px"}}>
           {step.primaryFields.map(f => <Field key={f.key} f={{ ...f, required: f.required && !answers.selfPay }} answers={answers} onChange={onChange} errors={errors} />)}
         </div>
       </div>
       <div style={panelStyle}>
-        <p style={titleStyle}>Secondary Insurance <span style={{fontSize:"12px",fontWeight:400,color:"#94a3b8"}}>(optional)</span></p>
+        <p style={titleStyle}>Secondary Insurance <span style={{fontSize:"13px",fontWeight:400,color:"#5b6475"}}>(optional)</span></p>
         <div style={{display:"flex",flexDirection:"column",gap:"12px"}}>
           {step.secondaryFields.map(f => <Field key={f.key} f={f} answers={answers} onChange={onChange} errors={errors} />)}
         </div>
@@ -315,10 +315,10 @@ function SignaturePad({ value, onChange, error }) {
   const clearSig = () => { canvasRef.current.getContext("2d").clearRect(0,0,canvasRef.current.width,canvasRef.current.height); setIsEmpty(true); onChange(null); };
 
   const btnStyle = active => ({
-    padding:"6px 16px", borderRadius:"8px", fontSize:"12px", fontWeight:600, cursor:"pointer",
+    padding:"6px 16px", borderRadius:"8px", fontSize:"13px", fontWeight:600, cursor:"pointer",
     border:`2px solid ${active ? BRAND : "#e2e8f0"}`,
     backgroundColor: active ? BRAND : "white",
-    color: active ? "white" : "#64748b",
+    color: active ? "white" : "#4b5563",
     fontFamily:"'Source Sans 3', sans-serif",
   });
 
@@ -336,7 +336,7 @@ function SignaturePad({ value, onChange, error }) {
         {mode==="upload" && (
           <div onClick={() => fileRef.current?.click()}
             style={{height:"120px",display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",gap:"8px",cursor:"pointer"}}>
-            <p style={{fontSize:"14px",color:"#94a3b8",fontFamily:"'Source Sans 3', sans-serif"}}>Click to upload signature image</p>
+            <p style={{fontSize:"14px",color:"#5b6475",fontFamily:"'Source Sans 3', sans-serif"}}>Click to upload signature image</p>
             <input ref={fileRef} type="file" accept="image/*" style={{display:"none"}} onChange={e => {
               const file=e.target.files?.[0]; if (!file) return;
               const reader=new FileReader();
@@ -347,14 +347,14 @@ function SignaturePad({ value, onChange, error }) {
         )}
         {isEmpty && mode==="draw" && (
           <div style={{position:"absolute",inset:0,display:"flex",alignItems:"center",justifyContent:"center",pointerEvents:"none"}}>
-            <p style={{color:"#e2e8f0",fontSize:"18px",fontFamily:"'Lora', serif"}}>Sign here</p>
+            <p style={{color:"#9aa3b2",fontSize:"18px",fontFamily:"'Lora', serif"}}>Sign here</p>
           </div>
         )}
       </div>
       <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginTop:"8px"}}>
-        {error ? <p style={{fontSize:"12px",color:"#ef4444",fontFamily:"'Source Sans 3', sans-serif"}}>⚠ {error}</p>
-               : <p style={{fontSize:"12px",color:"#94a3b8",fontFamily:"'Source Sans 3', sans-serif"}}>{mode==="draw"?"Draw your signature above":"Upload a signature image"}</p>}
-        {!isEmpty && <button type="button" onClick={clearSig} style={{fontSize:"12px",color:"#f87171",fontWeight:600,cursor:"pointer",background:"none",border:"none",fontFamily:"'Source Sans 3', sans-serif"}}>Clear</button>}
+        {error ? <p style={{fontSize:"13px",color:"#ef4444",fontFamily:"'Source Sans 3', sans-serif"}}>⚠ {error}</p>
+               : <p style={{fontSize:"13px",color:"#5b6475",fontFamily:"'Source Sans 3', sans-serif"}}>{mode==="draw"?"Draw your signature above":"Upload a signature image"}</p>}
+        {!isEmpty && <button type="button" onClick={clearSig} style={{fontSize:"13px",color:"#f87171",fontWeight:600,cursor:"pointer",background:"none",border:"none",fontFamily:"'Source Sans 3', sans-serif"}}>Clear</button>}
       </div>
     </div>
   );
@@ -368,7 +368,7 @@ function StepSignature({ step, answers, onChange, errors }) {
         <p style={{fontSize:"14px",color:"#475569",lineHeight:1.6,fontFamily:"'Source Sans 3', sans-serif"}}>{step.text}</p>
       </div>
       <div>
-        <label style={{display:"block",fontSize:"10px",fontWeight:700,textTransform:"uppercase",letterSpacing:"0.1em",marginBottom:"8px",color:errors?.signature?"#dc2626":"#94a3b8",fontFamily:"'Source Sans 3', sans-serif"}}>
+        <label style={{display:"block",fontSize:"12px",fontWeight:700,textTransform:"uppercase",letterSpacing:"0.1em",marginBottom:"8px",color:errors?.signature?"#dc2626":"#5b6475",fontFamily:"'Source Sans 3', sans-serif"}}>
           Signature <span style={{color:BRAND}}>*</span>
         </label>
         <SignaturePad value={answers.signature} onChange={v => onChange("signature",v)} error={errors?.signature} />
@@ -409,7 +409,7 @@ function Card({ step, answers, onChange, onNext, onBack, isFirst, isLast }) {
       {/* Header */}
       <div style={{padding:"28px 32px 20px",borderBottom:"1px solid #f1f5f9"}}>
         <h2 style={{fontSize:"22px",fontWeight:700,color:"#0f172a",marginBottom:"4px",fontFamily:"'Lora', Georgia, serif"}}>{step.title}</h2>
-        <p  style={{fontSize:"14px",color:"#64748b",lineHeight:1.5,fontFamily:"'Source Sans 3', sans-serif"}}>{step.subtitle}</p>
+        <p  style={{fontSize:"14px",color:"#4b5563",lineHeight:1.5,fontFamily:"'Source Sans 3', sans-serif"}}>{step.subtitle}</p>
       </div>
 
       {/* Content */}

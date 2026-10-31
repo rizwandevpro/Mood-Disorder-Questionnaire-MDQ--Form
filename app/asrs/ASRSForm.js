@@ -43,7 +43,7 @@ function StepInfo({ onNext }) {
           </svg>
         </div>
         <h2 style={{fontSize:"22px",fontWeight:700,color:"#0f172a",marginBottom:"8px",fontFamily:"'Lora', Georgia, serif"}}>Adult ADHD Self-Report Scale v1.1</h2>
-        <p style={{fontSize:"14px",color:"#64748b",lineHeight:1.6,fontFamily:"'Source Sans 3', sans-serif",maxWidth:"440px",margin:"0 auto"}}>
+        <p style={{fontSize:"14px",color:"#4b5563",lineHeight:1.6,fontFamily:"'Source Sans 3', sans-serif",maxWidth:"440px",margin:"0 auto"}}>
           Please rate yourself on each question based on how you have felt and conducted yourself over the{" "}
           <strong style={{color:"#1e293b"}}>past 6 months</strong>.
         </p>
@@ -53,8 +53,8 @@ function StepInfo({ onNext }) {
         <div style={{display:"flex",gap:"12px",marginBottom:"20px",flexWrap:"wrap"}}>
           {[{label:"Part A",desc:"Questions 1–6",color:"#3b82f6"},{label:"Part B",desc:"Questions 7–18",color:"#8b5cf6"}].map(p=>(
             <div key={p.label} style={{flex:1,minWidth:"140px",backgroundColor:"white",borderRadius:"12px",padding:"12px 16px",border:`2px solid ${p.color}20`}}>
-              <span style={{fontSize:"12px",fontWeight:700,color:p.color,fontFamily:"'Source Sans 3', sans-serif"}}>{p.label}</span>
-              <p style={{fontSize:"12px",color:"#64748b",fontFamily:"'Source Sans 3', sans-serif",margin:"2px 0 0"}}>{p.desc}</p>
+              <span style={{fontSize:"13px",fontWeight:700,color:p.color,fontFamily:"'Source Sans 3', sans-serif"}}>{p.label}</span>
+              <p style={{fontSize:"13px",color:"#4b5563",fontFamily:"'Source Sans 3', sans-serif",margin:"2px 0 0"}}>{p.desc}</p>
             </div>
           ))}
         </div>
@@ -62,11 +62,11 @@ function StepInfo({ onNext }) {
         <div style={{display:"grid",gridTemplateColumns:"repeat(5,1fr)",gap:"6px"}}>
           {OPTION_LABELS.map(l => (
             <div key={l} style={{textAlign:"center",padding:"10px 4px",borderRadius:"10px",border:"2px solid #e2e8f0",backgroundColor:"white"}}>
-              <div style={{fontSize:"10px",fontWeight:600,color:"#64748b",fontFamily:"'Source Sans 3', sans-serif",lineHeight:1.3}}>{l}</div>
+              <div style={{fontSize:"12px",fontWeight:600,color:"#4b5563",fontFamily:"'Source Sans 3', sans-serif",lineHeight:1.3}}>{l}</div>
             </div>
           ))}
         </div>
-        <p style={{fontSize:"11px",color:"#94a3b8",textAlign:"center",marginTop:"14px",fontFamily:"'Source Sans 3', sans-serif"}}>
+        <p style={{fontSize:"13px",color:"#5b6475",textAlign:"center",marginTop:"14px",fontFamily:"'Source Sans 3', sans-serif"}}>
           18 questions · auto-advances on selection · ~2 minutes
         </p>
       </div>
@@ -100,17 +100,17 @@ function StepQuestion({ step, answers, onChange, onBack, questionNumber }) {
       {/* Header */}
       <div style={{padding:"24px 32px 20px",borderBottom:"1px solid #f1f5f9"}}>
         <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:"10px",flexWrap:"wrap",gap:"8px"}}>
-          <span style={{fontSize:"11px",fontWeight:700,textTransform:"uppercase",letterSpacing:"0.1em",color:"#94a3b8",fontFamily:"'Source Sans 3', sans-serif"}}>
+          <span style={{fontSize:"13px",fontWeight:700,textTransform:"uppercase",letterSpacing:"0.1em",color:"#5b6475",fontFamily:"'Source Sans 3', sans-serif"}}>
             Question {questionNumber} of 18
           </span>
-          <span style={{fontSize:"11px",fontWeight:700,textTransform:"uppercase",letterSpacing:"0.08em",padding:"3px 12px",borderRadius:"20px",backgroundColor:`${partColor}15`,color:partColor,fontFamily:"'Source Sans 3', sans-serif"}}>
+          <span style={{fontSize:"13px",fontWeight:700,textTransform:"uppercase",letterSpacing:"0.08em",padding:"3px 12px",borderRadius:"20px",backgroundColor:`${partColor}15`,color:partColor,fontFamily:"'Source Sans 3', sans-serif"}}>
             Part {step.part}
           </span>
         </div>
         <p style={{fontSize:"18px",fontWeight:600,color:"#0f172a",lineHeight:1.5,fontFamily:"'Lora', Georgia, serif",margin:0}}>
           {step.text}
         </p>
-        <p style={{fontSize:"12px",color:"#94a3b8",marginTop:"8px",fontFamily:"'Source Sans 3', sans-serif"}}>
+        <p style={{fontSize:"13px",color:"#5b6475",marginTop:"8px",fontFamily:"'Source Sans 3', sans-serif"}}>
           Over the past 6 months…
         </p>
       </div>
@@ -144,7 +144,7 @@ function StepQuestion({ step, answers, onChange, onBack, questionNumber }) {
       {/* Footer */}
       <div style={{padding:"14px 28px 20px"}}>
         <button type="button" onClick={onBack}
-          style={{display:"flex",alignItems:"center",gap:"6px",padding:"10px 18px",borderRadius:"10px",fontSize:"13px",fontWeight:600,border:"2px solid #e2e8f0",color:"#64748b",backgroundColor:"white",cursor:"pointer",fontFamily:"'Source Sans 3', sans-serif",visibility:questionNumber===1?"hidden":"visible"}}
+          style={{display:"flex",alignItems:"center",gap:"6px",padding:"10px 18px",borderRadius:"10px",fontSize:"13px",fontWeight:600,border:"2px solid #e2e8f0",color:"#4b5563",backgroundColor:"white",cursor:"pointer",fontFamily:"'Source Sans 3', sans-serif",visibility:questionNumber===1?"hidden":"visible"}}
           onMouseEnter={e=>e.currentTarget.style.backgroundColor="#f1f5f9"}
           onMouseLeave={e=>e.currentTarget.style.backgroundColor="white"}>
           <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7"/></svg>

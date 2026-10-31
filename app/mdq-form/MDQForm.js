@@ -157,11 +157,11 @@ function StepInfo({ step, answers, onChange, errors }) {
     const labelEl = (
       <label
         className="block text-[10px] font-bold uppercase tracking-widest mb-2"
-        style={{ color: err ? "#dc2626" : "#94a3b8", fontFamily: "'Source Sans 3', sans-serif" }}
+        style={{ color: err ? "#dc2626" : "#5b6475", fontFamily: "'Source Sans 3', sans-serif" }}
       >
         {f.label}
         {required  && <span style={{ color: "#7d4f50" }}> *</span>}
-        {!required && <span className="normal-case tracking-normal font-normal text-slate-400"> (optional)</span>}
+        {!required && <span className="normal-case tracking-normal font-normal text-slate-500"> (optional)</span>}
       </label>
     );
 
@@ -185,7 +185,7 @@ function StepInfo({ step, answers, onChange, errors }) {
             style={{
               fontFamily:  "'Source Sans 3', sans-serif",
               borderColor: err ? "#dc2626" : "#e2e8f0",
-              color:       answers[f.key] ? "#1e293b" : "#94a3b8",
+              color:       answers[f.key] ? "#1e293b" : "#5b6475",
               cursor:      "pointer",
             }}
             onFocus={e => e.target.style.borderColor = err ? "#dc2626" : "#3b82f6"}
@@ -298,7 +298,7 @@ function StepChoice4({ step, answers, onAnswer }) {
               {opt.label}
             </span>
             <span
-              className={`text-xs leading-snug ${active ? "text-blue-600" : "text-slate-400"}`}
+              className={`text-xs leading-snug ${active ? "text-blue-600" : "text-slate-500"}`}
               style={{ fontFamily: "'Source Sans 3', sans-serif" }}
             >
               {opt.desc}
@@ -402,7 +402,7 @@ function CardContent({ step, answers, onChange, onAnswer, onNext, onBack, isFirs
 
         {step.type !== "info" && (
           <p
-            className="text-xs text-slate-400 italic"
+            className="text-xs text-slate-500 italic"
             style={{ fontFamily: "'Source Sans 3', sans-serif" }}
           >
             Select an answer to continue

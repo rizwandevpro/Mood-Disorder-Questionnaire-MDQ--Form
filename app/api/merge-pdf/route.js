@@ -127,7 +127,10 @@ export async function POST(req) {
   // Initialize inside handler so missing env var doesn't crash at module load
   const resend = new Resend(process.env.RESEND_API_KEY);
   try {
-    const { forms, documents, patientName, patientEmail, patientPhone, clinicLocation, selfPay } = await readRequest(req);
+    const { forms, documents, patientName, patientEmail, patientPhone, clinicLocation, selfPay, missing: rawMissing } = await readRequest(req);
+    // Forms the patient completed but whose PDF couldn't be built on their
+    // device (e.g. connection dropped) — sent anyway, and flagged here.
+    const missing = (Array.isArray(rawMissing) ? rawMissing : []).map(String).slice(0, 20);
 
     if (!forms.length) {
       return NextResponse.json({ error: "No PDF attachments received" }, { status: 400 });
@@ -175,7 +178,13 @@ export async function POST(req) {
           <h2 style="color:white;margin:0;font-size:18px;">New Patient — Complete Form Package</h2>
         </div>
         <div style="background:#f8fafc;padding:24px;border:1px solid #e2e8f0;border-top:none;border-radius:0 0 8px 8px;">
-          <p style="margin:0 0 12px;">A new patient has completed all <strong>${forms.length} intake forms</strong>.</p>
+          ${missing.length ? `
+          <div style="margin:0 0 14px;padding:12px 14px;background:#fef2f2;border:1px solid #fecaca;border-radius:8px;">
+            <p style="margin:0 0 6px;font-size:13px;font-weight:700;color:#b91c1c;">⚠ Incomplete package — ${missing.length} form${missing.length > 1 ? "s" : ""} could not be prepared on the patient's device</p>
+            ${missing.map((m) => `<div style="font-size:13px;color:#7f1d1d;">• ${esc(m)}</div>`).join("")}
+            <p style="margin:6px 0 0;font-size:12px;color:#7f1d1d;">The patient answered these, but the PDF failed (usually a connection drop). Please have the patient complete them at check-in.</p>
+          </div>` : ""}
+          <p style="margin:0 0 12px;">A new patient has submitted <strong>${forms.length} intake form${forms.length === 1 ? "" : "s"}</strong>.</p>
           <table style="width:100%;border-collapse:collapse;font-size:14px;">
             ${row("Patient", displayName, true)}
             ${row("Email", cleanEmail)}
@@ -222,6 +231,7 @@ export async function POST(req) {
             ${list(forms.map((f) => f.formName), "check")}
           </div>
 
+          ${missing.length ? `<p style="margin:0 0 12px;font-size:14px;color:#b45309;">We couldn't receive: ${missing.map(esc).join(", ")}. Our office may ask you to complete ${missing.length > 1 ? "these" : "this"} at your visit.</p>` : ""}
           <p style="margin:0 0 12px;font-size:14px;">${documents.length
             ? "We also received the photo(s) of your ID and insurance card. For your privacy, they are not included in this email."
             : "Please bring a copy of your insurance card to your first appointment."}</p>
@@ -235,7 +245,7 @@ export async function POST(req) {
       send(resend, {
         from:        FROM_FORMS,
         to:          CLINIC_EMAIL,
-        subject:     `New Patient Forms${displayLocation ? " — " + displayLocation : ""} — Complete Package — ${displayName}`,
+        subject:     `New Patient Forms${displayLocation ? " — " + displayLocation : ""} — ${missing.length ? `INCOMPLETE (${missing.length} missing)` : "Complete Package"} — ${displayName}`,
         html:        clinicHtml,
         attachments: clinicAttachments,
       }, "Clinic"),

@@ -70,8 +70,8 @@ function StepConsent({ answers, onChange, onNext }) {
     <div style={{ backgroundColor:"white", borderRadius:"24px", boxShadow:"0 4px 24px rgba(0,0,0,0.08)", border:"1px solid #f1f5f9", overflow:"hidden" }}>
 
       {/* Header */}
-      <div style={{ backgroundColor:BRAND, padding:"24px 28px" }}>
-        <h2 style={{ fontSize:"22px", fontWeight:700, color:"white", margin:0, fontFamily:"'Lora', Georgia, serif" }}>
+      <div style={{ backgroundColor:"#ffffff", padding:"24px 28px 18px", borderBottom:"1px solid #e3e8ef" }}>
+        <h2 style={{ fontSize:"22px", fontWeight:700, color:"#1e3a5f", margin:0, fontFamily:"'Lora', Georgia, serif" }}>
           HIPAA Compliance Patient Consent Form
         </h2>
       </div>
@@ -248,11 +248,11 @@ function StepSignature({ answers, onChange, onNext, onBack }) {
   return (
     <div style={{ backgroundColor:"white", borderRadius:"24px", boxShadow:"0 4px 24px rgba(0,0,0,0.08)", border:"1px solid #f1f5f9", overflow:"hidden" }}>
 
-      <div style={{ backgroundColor:BRAND, padding:"20px 28px" }}>
-        <h2 style={{ fontSize:"20px", fontWeight:700, color:"white", margin:0, fontFamily:"'Lora', Georgia, serif" }}>
+      <div style={{ backgroundColor:"#ffffff", padding:"20px 28px 18px", borderBottom:"1px solid #e3e8ef" }}>
+        <h2 style={{ fontSize:"20px", fontWeight:700, color:"#1e3a5f", margin:0, fontFamily:"'Lora', Georgia, serif" }}>
           Sign & Complete
         </h2>
-        <p style={{ color:"rgba(255,255,255,0.8)", fontSize:"14px", margin:"4px 0 0", fontFamily:"'Source Sans 3', sans-serif" }}>
+        <p style={{ color:"#4b5563", fontSize:"14px", margin:"4px 0 0", fontFamily:"'Source Sans 3', sans-serif" }}>
           Please print your name, sign, and add today's date.
         </p>
       </div>
@@ -261,7 +261,7 @@ function StepSignature({ answers, onChange, onNext, onBack }) {
 
         {/* Print Name */}
         <div>
-          <label style={{ display:"block", fontSize:"12px", fontWeight:700, textTransform:"uppercase", letterSpacing:"0.08em", color:"#94a3b8", marginBottom:"8px", fontFamily:"'Source Sans 3', sans-serif" }}>
+          <label style={{ display:"block", fontSize:"13px", fontWeight:700, textTransform:"uppercase", letterSpacing:"0.08em", color:"#5b6475", marginBottom:"8px", fontFamily:"'Source Sans 3', sans-serif" }}>
             Print Name <span style={{ color:BRAND }}>*</span>
           </label>
           <input type="text" className="hipaa-input"
@@ -272,7 +272,7 @@ function StepSignature({ answers, onChange, onNext, onBack }) {
 
         {/* Date */}
         <div>
-          <label style={{ display:"block", fontSize:"12px", fontWeight:700, textTransform:"uppercase", letterSpacing:"0.08em", color:"#94a3b8", marginBottom:"8px", fontFamily:"'Source Sans 3', sans-serif" }}>
+          <label style={{ display:"block", fontSize:"13px", fontWeight:700, textTransform:"uppercase", letterSpacing:"0.08em", color:"#5b6475", marginBottom:"8px", fontFamily:"'Source Sans 3', sans-serif" }}>
             Date <span style={{ color:BRAND }}>*</span>
           </label>
           <input type="date" className="hipaa-input" style={{ maxWidth:"240px" }}
@@ -284,12 +284,12 @@ function StepSignature({ answers, onChange, onNext, onBack }) {
         <div>
           {/* Label row */}
           <div style={{ display:"flex", alignItems:"center", justifyContent:"space-between", marginBottom:"10px" }}>
-            <label style={{ fontSize:"12px", fontWeight:700, textTransform:"uppercase", letterSpacing:"0.08em", color:"#94a3b8", fontFamily:"'Source Sans 3', sans-serif" }}>
+            <label style={{ fontSize:"13px", fontWeight:700, textTransform:"uppercase", letterSpacing:"0.08em", color:"#5b6475", fontFamily:"'Source Sans 3', sans-serif" }}>
               Signature <span style={{ color:BRAND }}>*</span>
             </label>
             {hasSig && (
               <button type="button" onClick={clearSig}
-                style={{ fontSize:"12px", fontWeight:600, color:"#94a3b8", background:"none", border:"none", cursor:"pointer", fontFamily:"'Source Sans 3', sans-serif", textDecoration:"underline" }}>
+                style={{ fontSize:"13px", fontWeight:600, color:"#5b6475", background:"none", border:"none", cursor:"pointer", fontFamily:"'Source Sans 3', sans-serif", textDecoration:"underline" }}>
                 Clear
               </button>
             )}
@@ -303,7 +303,7 @@ function StepSignature({ answers, onChange, onNext, onBack }) {
                   padding:"8px 20px", fontSize:"13px", fontWeight:700, border:"none", cursor:"pointer",
                   fontFamily:"'Source Sans 3', sans-serif", transition:"all 0.15s",
                   backgroundColor: sigMode === mode ? BRAND : "white",
-                  color: sigMode === mode ? "white" : "#64748b",
+                  color: sigMode === mode ? "white" : "#4b5563",
                 }}>
                 {label}
               </button>
@@ -316,7 +316,7 @@ function StepSignature({ answers, onChange, onNext, onBack }) {
               <canvas ref={canvasRef} className={`hipaa-sig-canvas${hasSig?" has-sig":""}`}
                 onMouseDown={startDraw} onMouseMove={draw} onMouseUp={endDraw} onMouseLeave={endDraw}
                 onTouchStart={startDraw} onTouchMove={draw} onTouchEnd={endDraw} />
-              <p style={{ fontSize:"12px", color:"#94a3b8", marginTop:"6px", fontFamily:"'Source Sans 3', sans-serif" }}>
+              <p style={{ fontSize:"13px", color:"#5b6475", marginTop:"6px", fontFamily:"'Source Sans 3', sans-serif" }}>
                 Draw your signature above using mouse or finger
               </p>
             </>
@@ -341,7 +341,7 @@ function StepSignature({ answers, onChange, onNext, onBack }) {
                   <p style={{ fontSize:"14px", fontWeight:600, color:"#475569", margin:"0 0 4px", fontFamily:"'Source Sans 3', sans-serif" }}>
                     Click to upload signature image
                   </p>
-                  <p style={{ fontSize:"12px", color:"#94a3b8", margin:0, fontFamily:"'Source Sans 3', sans-serif" }}>
+                  <p style={{ fontSize:"13px", color:"#5b6475", margin:0, fontFamily:"'Source Sans 3', sans-serif" }}>
                     PNG, JPG, or GIF supported
                   </p>
                   <input ref={fileRef} type="file" accept="image/*" onChange={handleUpload}
@@ -353,7 +353,7 @@ function StepSignature({ answers, onChange, onNext, onBack }) {
                     style={{ width:"100%", maxHeight:"140px", objectFit:"contain", display:"block" }} />
                 </div>
               )}
-              <p style={{ fontSize:"12px", color:"#94a3b8", marginTop:"6px", fontFamily:"'Source Sans 3', sans-serif" }}>
+              <p style={{ fontSize:"13px", color:"#5b6475", marginTop:"6px", fontFamily:"'Source Sans 3', sans-serif" }}>
                 Upload an image of your signature
               </p>
             </div>

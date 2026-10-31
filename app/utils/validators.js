@@ -48,3 +48,34 @@ export function formatZipInput(next) {
 export function isValidZip(v) {
   return /^\d{5}(-\d{4})?$/.test(String(v || "").trim());
 }
+
+// ── Number-only inputs ──────────────────────────────────────────────────────
+// Used on every keystroke: letters/symbols can't be typed at all.
+export function digitsOnly(v, maxLen = 10) {
+  return String(v ?? "").replace(/\D/g, "").slice(0, maxLen);
+}
+
+// Checked on Next/Submit. Returns an error string or null. Empty = OK
+// (required-ness is checked separately).
+export function rangeError(v, min, max, label = "value") {
+  const s = String(v ?? "").trim();
+  if (!s) return null;
+  if (!/^\d+$/.test(s)) return `Enter numbers only.`;
+  const n = Number(s);
+  if (n < min || n > max) return `Please enter a valid ${label} (${min}–${max}).`;
+  return null;
+}
+
+export const CURRENT_YEAR = new Date().getFullYear();
+export function yearError(v) {
+  const s = String(v ?? "").trim();
+  if (!s) return null;
+  if (!/^\d{4}$/.test(s)) return "Enter a 4-digit year, e.g. 2015.";
+  return rangeError(s, 1900, CURRENT_YEAR, "year");
+}
+
+// M/F style single-letter fields
+export function oneOfLetters(v, allowed = "MF") {
+  const c = String(v ?? "").toUpperCase().replace(new RegExp(`[^${allowed}]`, "g"), "");
+  return c.slice(-1);
+}

@@ -46,11 +46,11 @@ function StepConsent({ answers, onChange, onNext }) {
     <div style={{ backgroundColor: "white", borderRadius: "24px", boxShadow: "0 4px 24px rgba(0,0,0,0.08)", border: "1px solid #f1f5f9", overflow: "hidden" }}>
 
       {/* Header */}
-      <div style={{ backgroundColor: BRAND, padding: "24px 28px" }}>
-        <h2 style={{ fontSize: "22px", fontWeight: 700, color: "white", margin: 0, fontFamily: "'Lora', Georgia, serif" }}>
+      <div style={{ backgroundColor:"#ffffff", padding:"24px 28px 18px", borderBottom:"1px solid #e3e8ef" }}>
+        <h2 style={{ fontSize: "22px", fontWeight: 700, color:"#1e3a5f", margin: 0, fontFamily: "'Lora', Georgia, serif" }}>
           {FORM_TITLE}
         </h2>
-        <p style={{ color: "rgba(255,255,255,0.8)", fontSize: "13px", margin: "4px 0 0", fontFamily: "'Source Sans 3', sans-serif" }}>
+        <p style={{ color:"#4b5563", fontSize: "13px", margin: "4px 0 0", fontFamily: "'Source Sans 3', sans-serif" }}>
           {EFFECTIVE_DATE}
         </p>
       </div>
@@ -88,14 +88,14 @@ function StepConsent({ answers, onChange, onNext }) {
 
       {/* Email field */}
       <div style={{ padding: "20px 28px", borderBottom: "1px solid #f1f5f9" }}>
-        <label style={{ display: "block", fontSize: "12px", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.08em", color: "#94a3b8", marginBottom: "8px", fontFamily: "'Source Sans 3', sans-serif" }}>
+        <label style={{ display: "block", fontSize: "13px", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.08em", color: "#5b6475", marginBottom: "8px", fontFamily: "'Source Sans 3', sans-serif" }}>
           Email Address <span style={{ color: BRAND }}>*</span>
         </label>
         <input type="email" className="qc-input" style={{ textTransform: "none" }}
           value={answers.email || ""}
           onChange={e => onChange("email", e.target.value)}
           placeholder="name@example.com" />
-        <p style={{ fontSize: "12px", color: "#94a3b8", marginTop: "6px", fontFamily: "'Source Sans 3', sans-serif" }}>
+        <p style={{ fontSize: "13px", color: "#5b6475", marginTop: "6px", fontFamily: "'Source Sans 3', sans-serif" }}>
           We'll email a copy of your signed form to this address.
         </p>
       </div>
@@ -123,11 +123,11 @@ function StepSignature({ answers, onChange, onNext, onBack }) {
   return (
     <div style={{ backgroundColor: "white", borderRadius: "24px", boxShadow: "0 4px 24px rgba(0,0,0,0.08)", border: "1px solid #f1f5f9", overflow: "hidden" }}>
 
-      <div style={{ backgroundColor: BRAND, padding: "20px 28px" }}>
-        <h2 style={{ fontSize: "20px", fontWeight: 700, color: "white", margin: 0, fontFamily: "'Lora', Georgia, serif" }}>
+      <div style={{ backgroundColor:"#ffffff", padding:"20px 28px 18px", borderBottom:"1px solid #e3e8ef" }}>
+        <h2 style={{ fontSize: "20px", fontWeight: 700, color:"#1e3a5f", margin: 0, fontFamily: "'Lora', Georgia, serif" }}>
           Acknowledge & Complete
         </h2>
-        <p style={{ color: "rgba(255,255,255,0.8)", fontSize: "14px", margin: "4px 0 0", fontFamily: "'Source Sans 3', sans-serif" }}>
+        <p style={{ color:"#4b5563", fontSize: "14px", margin: "4px 0 0", fontFamily: "'Source Sans 3', sans-serif" }}>
           Please initial and add today's date.
         </p>
       </div>
@@ -136,19 +136,19 @@ function StepSignature({ answers, onChange, onNext, onBack }) {
 
         {/* Patient Initials */}
         <div>
-          <label style={{ display: "block", fontSize: "12px", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.08em", color: "#94a3b8", marginBottom: "8px", fontFamily: "'Source Sans 3', sans-serif" }}>
+          <label style={{ display: "block", fontSize: "13px", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.08em", color: "#5b6475", marginBottom: "8px", fontFamily: "'Source Sans 3', sans-serif" }}>
             Patient Initials <span style={{ color: BRAND }}>*</span>
           </label>
           <input type="text" className="qc-input" style={{ maxWidth: "160px" }}
-            maxLength={6}
             value={answers.patientInitials || ""}
-            onChange={e => onChange("patientInitials", e.target.value.toUpperCase())}
+            onChange={e => onChange("patientInitials", e.target.value.toUpperCase().replace(/[^A-Z]/g, "").slice(0, 4))}
+            maxLength={4} autoCapitalize="characters"
             placeholder="e.g. JD" />
         </div>
 
         {/* Date */}
         <div>
-          <label style={{ display: "block", fontSize: "12px", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.08em", color: "#94a3b8", marginBottom: "8px", fontFamily: "'Source Sans 3', sans-serif" }}>
+          <label style={{ display: "block", fontSize: "13px", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.08em", color: "#5b6475", marginBottom: "8px", fontFamily: "'Source Sans 3', sans-serif" }}>
             Date <span style={{ color: BRAND }}>*</span>
           </label>
           <input type="date" className="qc-input" style={{ maxWidth: "240px", textTransform: "none" }}

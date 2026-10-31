@@ -21,7 +21,10 @@ import { useState, useRef, useCallback, useEffect } from "react";
 import Image from "next/image";
 
 import GlobalInfoStep from "./GlobalInfoStep";
-import { INITIAL_INFO, buildFullName, withPrefill } from "./prefill";
+import "./theme.css";
+import { INITIAL_INFO, buildFullName, withPrefill, todayISO } from "./prefill";
+import { preloadFormAssets } from "./preload";
+import { saveProgress, loadProgress, clearProgress } from "./progressStore";
 
 // ── Form components ───────────────────────────────────────────────────────────
 import HIPAAForm           from "../hipaa-intake/HIPAAForm";
@@ -60,16 +63,19 @@ import { THANKYOU_STEP as CANCELLATION_THANKYOU } from "../cancellation-no-show-
 
 // ── Form sequence ─────────────────────────────────────────────────────────────
 const FORMS = [
-  { id: "hipaa-intake",   label: "HIPAA & Intake",   icon: "🔒" },
-  { id: "health-history", label: "Health History",   icon: "🏥" },
-  { id: "gad7",           label: "GAD-7 Anxiety",    icon: "🧠" },
-  { id: "asrs",           label: "ASRS ADHD",        icon: "⚡" },
-  { id: "phq9",           label: "PHQ-9 Depression", icon: "💙" },
-  { id: "brown-scales",   label: "Brown Scales",     icon: "📋" },
-  { id: "mdq",            label: "MDQ Mood",         icon: "🌗" },
-  { id: "cancellation",   label: "Cancellation Policy", icon: "📅" },
+  { id: "hipaa-intake",   label: "HIPAA & Intake",   icon: "🔒", mins: 5 },
+  { id: "health-history", label: "Health History",   icon: "🏥", mins: 5 },
+  { id: "gad7",           label: "GAD-7 Anxiety",    icon: "🧠", mins: 1 },
+  { id: "asrs",           label: "ASRS ADHD",        icon: "⚡", mins: 2 },
+  { id: "phq9",           label: "PHQ-9 Depression", icon: "💙", mins: 1 },
+  { id: "brown-scales",   label: "Brown Scales",     icon: "📋", mins: 6 },
+  { id: "mdq",            label: "MDQ Mood",         icon: "🌗", mins: 2 },
+  { id: "cancellation",   label: "Cancellation Policy", icon: "📅", mins: 1 },
 ];
 const TOTAL_FORMS = FORMS.length;
+const minsLeftFrom = (idx) => FORMS.slice(idx).reduce((n, f) => n + f.mins, 0);
+// Pause between forms ("✓ Done — next up"). Was 2.5 s; tap "Continue" to skip.
+const TRANSITION_MS = 900;
 // Stage index of each form — derived from FORMS order, never hard-coded.
 const IDX = Object.fromEntries(FORMS.map((f, i) => [f.id, i]));
 
@@ -107,29 +113,74 @@ const HIPAA_STEPS              = 2;   // globalStep 0–1 = HIPAAForm
 // step would have made the Intake signature step count as "done").
 const HIPAA_INTAKE_THANKYOU    = HIPAA_STEPS + INTAKE_THANKYOU_INDEX;
 
-// ── Transition banner ─────────────────────────────────────────────────────────
-function TransitionBanner({ completedIndex, nextForm }) {
+// ── PDF watchdog ──────────────────────────────────────────────────────────────
+// A form's PDF normally builds in 1–3 s after the form is completed. If it
+// hasn't arrived after PDF_TIMEOUT_MS (e.g. a network drop while loading), its
+// builder is re-mounted. After PDF_MAX_TRIES the form is marked failed, and the
+// submission is sent without it (the clinic email lists it as missing).
+const PDF_TIMEOUT_MS = 15000;
+const PDF_MAX_TRIES  = 3;
+
+// ── Resume card (saved progress found on this device) ─────────────────────────
+function ResumeCard({ saved, onContinue, onFresh }) {
+  const font  = "'Source Sans 3', sans-serif";
+  const where = typeof saved.stage === "number" ? `Form ${saved.stage + 1} of ${TOTAL_FORMS} — ${FORMS[saved.stage]?.label}`
+              : saved.stage === "done" ? "Ready to send" : "Patient information";
+  const when  = new Date(saved.savedAt).toLocaleString(undefined, { weekday: "short", month: "short", day: "numeric", hour: "numeric", minute: "2-digit" });
+  const name  = [saved.info?.firstName, saved.info?.lastName].filter(Boolean).join(" ");
   return (
-    <div style={{ maxWidth: "560px", margin: "0 auto", padding: "40px 0" }}>
-      <div style={{ backgroundColor: "white", borderRadius: "20px", padding: "40px 32px", textAlign: "center", boxShadow: "0 4px 24px rgba(0,0,0,0.07)", border: "1px solid #e2e8f0" }}>
-        <div style={{ width: "64px", height: "64px", borderRadius: "50%", backgroundColor: "#f0fdf4", border: "3px solid #16a34a", display: "flex", alignItems: "center", justifyContent: "center", margin: "0 auto 16px" }}>
-          <svg width="28" height="28" fill="none" viewBox="0 0 24 24" stroke="#16a34a" strokeWidth={2.5}>
+    <div style={{ maxWidth: "560px", margin: "0 auto", padding: "24px 0" }}>
+      <div style={{ backgroundColor: "white", borderRadius: "20px", padding: "32px 28px", boxShadow: "0 4px 24px rgba(0,0,0,0.07)", border: "1px solid #e2e8f0" }}>
+        <h2 style={{ fontSize: "22px", fontWeight: 700, color: "#0f172a", fontFamily: "'Lora', serif", margin: "0 0 8px" }}>
+          Welcome back{name ? `, ${saved.info.firstName}` : ""}
+        </h2>
+        <p style={{ fontSize: "15px", color: "#475569", lineHeight: 1.6, margin: "0 0 18px", fontFamily: font }}>
+          You have unfinished forms saved on this device. Continue where you left off?
+        </p>
+        <div style={{ backgroundColor: "#f8fafc", border: "1px solid #e2e8f0", borderRadius: "12px", padding: "14px 16px", marginBottom: "22px", fontFamily: font, fontSize: "14px", color: "#334155" }}>
+          <div><strong>Where you stopped:</strong> {where}</div>
+          <div style={{ marginTop: "4px" }}><strong>Saved:</strong> {when}</div>
+        </div>
+        <button onClick={onContinue}
+          style={{ width: "100%", padding: "15px", borderRadius: "12px", fontSize: "16px", fontWeight: 700, border: "none", color: "white", backgroundColor: "#7d4f50", cursor: "pointer", fontFamily: font, marginBottom: "10px" }}>
+          Continue my forms →
+        </button>
+        <button onClick={onFresh}
+          style={{ width: "100%", padding: "13px", borderRadius: "12px", fontSize: "14px", fontWeight: 600, border: "2px solid #e2e8f0", color: "#475569", backgroundColor: "white", cursor: "pointer", fontFamily: font }}>
+          Not {name || "me"}? Start fresh
+        </button>
+        <p style={{ fontSize: "13px", color: "#5b6475", lineHeight: 1.5, margin: "14px 0 0", fontFamily: font }}>
+          &ldquo;Start fresh&rdquo; permanently deletes the saved answers from this device. Saved answers are deleted automatically after 48 hours, or as soon as your forms are sent.
+        </p>
+      </div>
+    </div>
+  );
+}
+
+// ── Transition banner ─────────────────────────────────────────────────────────
+function TransitionBanner({ completedIndex, nextForm, onContinue }) {
+  const done = completedIndex + 1;
+  return (
+    <div className="pf-pop" style={{ maxWidth: "520px", margin: "0 auto", padding: "32px 0" }}>
+      <div style={{ backgroundColor: "white", borderRadius: "20px", padding: "32px 28px", textAlign: "center", border: "1px solid #e3e8ef" }}>
+        <div style={{ width: "60px", height: "60px", borderRadius: "50%", backgroundColor: "#ecf6f0", display: "flex", alignItems: "center", justifyContent: "center", margin: "0 auto 14px" }}>
+          <svg className="pf-check" width="28" height="28" fill="none" viewBox="0 0 24 24" stroke="#2f7d5a" strokeWidth={2.5}>
             <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
           </svg>
         </div>
-        <h2 style={{ fontSize: "20px", fontWeight: 700, color: "#0f172a", fontFamily: "'Lora', serif", marginBottom: "8px" }}>
-          {FORMS[completedIndex].label} Complete
-        </h2>
-        <p style={{ fontSize: "14px", color: "#64748b", fontFamily: "'Source Sans 3', sans-serif", marginBottom: "24px" }}>
-          Your PDF is being prepared in the background.
+        <h2 style={{ fontSize: "21px", fontWeight: 700, margin: "0 0 4px" }}>{FORMS[completedIndex].label} done</h2>
+        <p style={{ fontSize: "15px", color: "#4b5563", margin: "0 0 18px" }}>
+          {done} of {TOTAL_FORMS} complete{nextForm ? ` · about ${minsLeftFrom(done)} min left` : ""}
         </p>
         {nextForm && (
-          <div style={{ backgroundColor: "#f8fafc", borderRadius: "12px", padding: "16px", border: "1px solid #e2e8f0" }}>
-            <p style={{ fontSize: "12px", color: "#94a3b8", textTransform: "uppercase", letterSpacing: "0.08em", fontFamily: "'Source Sans 3', sans-serif", marginBottom: "6px" }}>Next up</p>
-            <p style={{ fontSize: "16px", fontWeight: 700, color: "#0f172a", fontFamily: "'Source Sans 3', sans-serif", margin: 0 }}>
-              {nextForm.icon} {nextForm.label}
-            </p>
-          </div>
+          <button type="button" onClick={onContinue}
+            style={{ width: "100%", display: "flex", alignItems: "center", justifyContent: "space-between", gap: "10px", padding: "14px 18px", borderRadius: "14px", border: "1px solid #d6dce4", backgroundColor: "#f6f8fb", cursor: "pointer", textAlign: "left" }}>
+            <span>
+              <span style={{ display: "block", fontSize: "13px", color: "#4b5563" }}>Next up · about {nextForm.mins} min</span>
+              <span style={{ display: "block", fontSize: "17px", fontWeight: 600, color: "#0b1c30" }}>{nextForm.icon} {nextForm.label}</span>
+            </span>
+            <span style={{ fontSize: "15px", fontWeight: 600, color: "#7d4f50", whiteSpace: "nowrap" }}>Continue →</span>
+          </button>
         )}
       </div>
     </div>
@@ -187,12 +238,31 @@ export default function PatientFormsPage() {
   // Which forms have completed (to mount their mappers)
   const [completedForms, setCompletedForms] = useState([]);
 
+  const transitionTimerRef   = useRef(null);
+  const transitionAdvanceRef = useRef(null);   // "Continue" on the transition card
+
+  // Comfort: bigger text toggle + "saved" reassurance
+  const [largeText, setLargeText] = useState(false);
+  const [savedFlash, setSavedFlash] = useState(0);
+  useEffect(() => { try { setLargeText(localStorage.getItem("pf-large") === "1"); } catch {} }, []);
+  const toggleLarge = () => setLargeText(v => { try { localStorage.setItem("pf-large", v ? "0" : "1"); } catch {} return !v; });
+
   // Pending form to complete (set during render, processed via useEffect)
   const pendingComplete = useRef(null);
 
   // PDF blobs
-  const blobsRef     = useRef({});
-  const emailSentRef = useRef(false);
+  const blobsRef       = useRef({});
+  const sendStartedRef = useRef(false);
+  const [blobCount,   setBlobCount]   = useState(0);      // re-render when a PDF arrives
+  const [mapperKeys,  setMapperKeys]  = useState({});     // formId → remount counter
+  const pdfTriesRef   = useRef({});                       // formId → tries used
+  const [failedForms, setFailedForms] = useState([]);     // gave up after PDF_MAX_TRIES
+  const [sentMissing, setSentMissing] = useState([]);     // names sent as missing
+
+  // Save-on-device / resume
+  const [resumeOffer, setResumeOffer] = useState(null);   // saved state awaiting choice
+  const [restored,    setRestored]    = useState(false);  // true once load check is done
+  const deliveredRef = useRef(false);                     // set on successful send → stop saving
   const cancellationEmailRef = useRef(""); // fresh value for async mergeAndSend
   const intakeDocsRef        = useRef({}); // ID/insurance photos + selfPay, fresh for mergeAndSend
   const prefillCache = useRef({});
@@ -200,6 +270,48 @@ export default function PatientFormsPage() {
   // Final state
   const [mergedUrl,   setMergedUrl]   = useState(null);
   const [emailStatus, setEmailStatus] = useState("idle");
+
+  // ── On mount: start preloading form assets; look for saved progress ──────
+  useEffect(() => {
+    preloadFormAssets();
+    loadProgress().then(saved => {
+      const meaningful = saved && (saved.stage !== "info" || saved.info?.firstName || saved.info?.lastName);
+      if (meaningful) setResumeOffer(saved); else setRestored(true);
+    });
+  }, []);
+
+  const resumeSaved = () => {
+    const saved = resumeOffer;
+    // Forms not yet completed should be dated today, not the day they started.
+    const nextInfo = { ...INITIAL_INFO, ...saved.info, todayDate: todayISO() };
+    infoRef.current = nextInfo;
+    setInfo(nextInfo);
+    setFormAnswers({ ...initialAnswers(), ...saved.formAnswers });
+    setFormSteps({ ...INITIAL_STEPS, ...saved.formSteps });
+    setCompletedForms(saved.completedForms || []);   // their PDFs rebuild from saved answers
+    setStage(saved.stage ?? "info");
+    setResumeOffer(null);
+    setRestored(true);
+    window.scrollTo({ top: 0 });
+  };
+  const discardSaved = () => {
+    clearProgress();
+    setResumeOffer(null);
+    setRestored(true);
+  };
+
+  // Save progress (debounced). Never before the resume choice is made, and
+  // never after a successful send (the saved copy is deleted then).
+  useEffect(() => {
+    if (!restored || deliveredRef.current) return;
+    const t = setTimeout(() => {
+      if (deliveredRef.current) return;                                    // sent while waiting
+      if (stage === "info" && !info.firstName && !info.lastName) return;   // nothing worth saving yet
+      saveProgress({ info, formAnswers, formSteps, stage, completedForms })
+        .then(ok => { if (ok && stage !== "info") setSavedFlash(Date.now()); });
+    }, 600);
+    return () => clearTimeout(t);
+  }, [restored, info, formAnswers, formSteps, stage, completedForms]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // ── Info handler ──────────────────────────────────────────────────────────
   const handleInfoChange = (key, value) => {
@@ -241,17 +353,27 @@ export default function PatientFormsPage() {
     const idx = pendingComplete.current;
     pendingComplete.current = null;
 
+    // Freeze this form's prefilled values (dates, signature, name) into its own
+    // answers, so a next-day resume doesn't re-date an already-signed form.
+    const doneId = FORMS[idx].id;
+    const frozen = getAnswers(doneId);
+    setFormAnswers(prev => ({ ...prev, [doneId]: frozen }));
+
     // Mark form as completed (mounts its mapper)
     setCompletedForms(prev => prev.includes(idx) ? prev : [...prev, idx]);
     setShowTransition(true);
     setTransitionIdx(idx);
 
-    setTimeout(() => {
+    const advance = () => {
+      clearTimeout(transitionTimerRef.current);
+      transitionAdvanceRef.current = null;
       setShowTransition(false);
       setTransitionIdx(null);
       setStage(idx + 1 < TOTAL_FORMS ? idx + 1 : "done");
-      window.scrollTo({ top: 0, behavior: "smooth" });
-    }, 2500);
+      window.scrollTo({ top: 0 });
+    };
+    transitionAdvanceRef.current = advance;
+    transitionTimerRef.current = setTimeout(advance, idx + 1 < TOTAL_FORMS ? TRANSITION_MS : 600);
   });
 
   // ── Merge + send ──────────────────────────────────────────────────────────
@@ -260,7 +382,9 @@ export default function PatientFormsPage() {
     const currentInfo = infoRef.current;
 
     try {
-      const formOrder = FORMS.map(f => f.id);
+      // Only forms whose PDF was built; the rest are reported as missing.
+      const formOrder = FORMS.map(f => f.id).filter(id => blobsRef.current[id]);
+      const missing   = FORMS.filter(f => !blobsRef.current[f.id]).map(f => FORM_NAMES[f.id]);
       const formNames = FORM_NAMES;
 
       const name = currentInfo.fullName || "Patient";
@@ -304,6 +428,7 @@ export default function PatientFormsPage() {
         selfPay:        docs.selfPay,
         forms:          [],
         documents:      [],
+        missing,
       };
       formOrder.forEach((id, i) => {
         const field = `form_${i}`;
@@ -326,7 +451,10 @@ export default function PatientFormsPage() {
 
       const data = await res.json();
       if (data.success) {
+        deliveredRef.current = true;   // stops any queued save from re-writing it
+        setSentMissing(missing);
         setEmailStatus("sent");
+        clearProgress();               // delivered — don't keep health data on the device
       } else {
         console.error("Email error:", data.error);
         setEmailStatus("error");
@@ -344,13 +472,66 @@ export default function PatientFormsPage() {
 
     const collected = Object.keys(blobsRef.current).length;
     console.log(`[unified] blob collected: ${formId} (${collected}/${TOTAL_FORMS})`);
-
-    if (collected === TOTAL_FORMS && !emailSentRef.current) {
-      emailSentRef.current = true;
-      console.log("[unified] all blobs collected — merging and sending");
-      mergeAndSend();
-    }
+    setBlobCount(collected);              // send is triggered by the effect below
   }, []);
+
+  // ── Watchdog: rebuild a form's PDF if it hasn't arrived in time ──────────
+  useEffect(() => {
+    const timers = [];
+    completedForms.forEach(idx => {
+      const id = FORMS[idx].id;
+      if (blobsRef.current[id] || failedForms.includes(id)) return;
+      timers.push(setTimeout(() => {
+        if (blobsRef.current[id]) return;
+        const used = (pdfTriesRef.current[id] || 1);
+        if (used < PDF_MAX_TRIES) {
+          pdfTriesRef.current[id] = used + 1;
+          console.warn(`[unified] ${id} PDF not ready — rebuilding (try ${used + 1}/${PDF_MAX_TRIES})`);
+          preloadFormAssets();                                   // no-op if already loaded
+          setMapperKeys(k => ({ ...k, [id]: (k[id] || 0) + 1 })); // remount its builder
+        } else {
+          console.error(`[unified] ${id} PDF failed after ${PDF_MAX_TRIES} tries`);
+          setFailedForms(f => f.includes(id) ? f : [...f, id]);
+        }
+      }, PDF_TIMEOUT_MS));
+    });
+    return () => timers.forEach(clearTimeout);
+  }, [completedForms, mapperKeys, failedForms, blobCount]);
+
+  // ── Send once every completed form has a PDF (or has definitively failed) ─
+  useEffect(() => {
+    if (sendStartedRef.current || completedForms.length < TOTAL_FORMS) return;
+    const pending = FORMS.filter(f => !blobsRef.current[f.id] && !failedForms.includes(f.id));
+    if (pending.length) return;
+    if (Object.keys(blobsRef.current).length === 0) return;      // nothing to send — wait for Try again
+    sendStartedRef.current = true;
+    console.log("[unified] merging and sending", failedForms.length ? `(missing: ${failedForms.join(", ")})` : "");
+    mergeAndSend();
+  }, [completedForms, blobCount, failedForms]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // On reaching the end, give any PDF that failed mid-flow one fresh round —
+  // the connection has often recovered by then.
+  const finalRoundRef = useRef(false);
+  useEffect(() => {
+    if (completedForms.length < TOTAL_FORMS || finalRoundRef.current) return;
+    finalRoundRef.current = true;
+    if (!failedForms.length) return;
+    failedForms.forEach(id => { pdfTriesRef.current[id] = 1; });
+    preloadFormAssets();
+    setMapperKeys(k => ({ ...k, ...Object.fromEntries(failedForms.map(id => [id, (k[id] || 0) + 1])) }));
+    setFailedForms([]);
+  }, [completedForms, failedForms]);
+
+  // "Try again": rebuild any missing PDFs with fresh tries, then resend.
+  const retryAll = () => {
+    const missingIds = FORMS.map(f => f.id).filter(id => !blobsRef.current[id]);
+    missingIds.forEach(id => { pdfTriesRef.current[id] = 1; });
+    preloadFormAssets();
+    setMapperKeys(k => ({ ...k, ...Object.fromEntries(missingIds.map(id => [id, (k[id] || 0) + 1])) }));
+    setFailedForms([]);
+    setEmailStatus("idle");
+    sendStartedRef.current = false;
+  };
 
   const handleDownload = () => {
     if (!mergedUrl) return;
@@ -370,7 +551,15 @@ export default function PatientFormsPage() {
     cancellationEmailRef.current = "";
     setCompletedForms([]);
     blobsRef.current = {};
-    emailSentRef.current = false;
+    sendStartedRef.current = false;
+    pdfTriesRef.current = {};
+    setBlobCount(0);
+    setMapperKeys({});
+    setFailedForms([]);
+    setSentMissing([]);
+    finalRoundRef.current = false;
+    deliveredRef.current = false;
+    clearProgress();
     pendingComplete.current = null;
     setMergedUrl(null);
     setEmailStatus("idle");
@@ -411,9 +600,9 @@ export default function PatientFormsPage() {
   };
 
   const headerLabel = stage === "info" ? "Patient Information"
-    : stage === "done"                 ? "All Forms Complete"
+    : stage === "done"                 ? (emailStatus === "sent" ? "All Forms Complete" : "Finishing up")
     : showTransition && transitionIdx !== null ? `${FORMS[transitionIdx]?.label} Complete`
-    : currentFormIndex !== null        ? `Form ${currentFormIndex + 1} of ${TOTAL_FORMS} — ${FORMS[currentFormIndex].label}`
+    : currentFormIndex !== null        ? `Form ${currentFormIndex + 1} of ${TOTAL_FORMS} · ~${minsLeftFrom(currentFormIndex)} min left · ${FORMS[currentFormIndex].label}`
     : "";
 
   // ── Check if current form reached its thank-you step ─────────────────────
@@ -429,37 +618,46 @@ export default function PatientFormsPage() {
   // ── Render ────────────────────────────────────────────────────────────────
   return (
     <>
-      <link href="https://fonts.googleapis.com/css2?family=Lora:wght@400;600;700&family=Source+Sans+3:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
+      <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;600;700&family=Roboto+Slab:wght@500;600;700&display=swap" rel="stylesheet" />
 
-      <div style={{ minHeight: "100vh", background: "linear-gradient(135deg,#fdf8f8 0%,#ffffff 50%,#fdf8f8 100%)" }}>
+      <div className={`pf-theme${largeText ? " pf-large" : ""}`} style={{ minHeight: "100vh" }}>
 
         {/* ── Header ── */}
-        <div style={{ backgroundColor: "#7d4f50", position: "sticky", top: 0, zIndex: 40, boxShadow: "0 2px 12px rgba(0,0,0,0.15)" }}>
+        <div style={{ backgroundColor: "#1e3a5f", position: "sticky", top: 0, zIndex: 40, boxShadow: "0 4px 14px rgba(11,28,48,0.18)" }}>
           <div style={{ maxWidth: "800px", margin: "0 auto", padding: "10px 16px", display: "flex", alignItems: "center", justifyContent: "space-between", gap: "12px" }}>
             <div style={{ display: "flex", alignItems: "center", gap: "10px", minWidth: 0 }}>
               <div style={{ width: "40px", height: "40px", backgroundColor: "white", borderRadius: "8px", display: "flex", alignItems: "center", justifyContent: "center", padding: "4px", flexShrink: 0 }}>
                 <Image src="/logo2.png" alt="Logo" width={72} height={36} style={{ objectFit: "contain" }} />
               </div>
               <div style={{ minWidth: 0 }}>
-                <p style={{ color: "white", fontWeight: 700, fontSize: "13px", letterSpacing: "0.06em", textTransform: "uppercase", fontFamily: "'Source Sans 3', sans-serif", margin: 0, lineHeight: 1.2 }}>Cambridge Psychiatry</p>
-                <p style={{ color: "rgba(255,255,255,0.7)", fontSize: "10px", letterSpacing: "0.05em", textTransform: "uppercase", fontFamily: "'Source Sans 3', sans-serif", margin: 0, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{headerLabel}</p>
+                <p style={{ color: "white", fontWeight: 600, fontSize: "15px", margin: 0, lineHeight: 1.25 }}>Cambridge Psychiatry</p>
+                <p style={{ color: "rgba(255,255,255,0.82)", fontSize: "13px", margin: 0, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{headerLabel}</p>
               </div>
             </div>
+            <div style={{ display: "flex", alignItems: "center", gap: "10px", flexShrink: 0 }}>
+            {savedFlash > 0 && stage !== "info" && emailStatus !== "sent" && (
+              <span key={savedFlash} className="pf-saved" title="Your progress is saved on this device" style={{ fontSize: "12px", color: "rgba(255,255,255,0.85)", whiteSpace: "nowrap" }}>✓ Saved</span>
+            )}
+            <button type="button" onClick={toggleLarge} aria-pressed={largeText} aria-label={largeText ? "Normal text size" : "Larger text"} title={largeText ? "Normal text size" : "Larger text"}
+              style={{ minHeight: "36px", height: "36px", padding: "0 10px", borderRadius: "8px", border: "1px solid rgba(255,255,255,0.35)", backgroundColor: largeText ? "rgba(255,255,255,0.18)" : "transparent", color: "white", fontWeight: 600, fontSize: "15px", cursor: "pointer" }}>
+              <span style={{ fontSize: "12px" }}>A</span>A
+            </button>
             {stage !== "info" && (
-              <div style={{ display: "flex", gap: "6px", flexShrink: 0 }}>
+              <div style={{ display: "flex", gap: "5px", flexShrink: 0 }} className="pf-dots">
                 {FORMS.map((f, i) => (
                   <div key={f.id} title={f.label} style={{
                     width: "8px", height: "8px", borderRadius: "50%", transition: "background-color 0.3s",
-                    backgroundColor: i < formsDone ? "#6ee7b7" : i === currentFormIndex ? "white" : "rgba(255,255,255,0.25)",
+                    backgroundColor: i < formsDone ? "#8fd3b0" : i === currentFormIndex ? "white" : "rgba(255,255,255,0.28)",
                   }} />
                 ))}
               </div>
             )}
+            </div>
           </div>
           {stage !== "info" && stage !== "done" && (
             <div style={{ maxWidth: "800px", margin: "0 auto", padding: "0 16px 8px" }}>
               <div style={{ height: "3px", backgroundColor: "rgba(255,255,255,0.15)", borderRadius: "999px", overflow: "hidden" }}>
-                <div style={{ height: "100%", width: `${(formsDone / TOTAL_FORMS) * 100}%`, background: "linear-gradient(to right,#93c5fd,#6ee7b7)", borderRadius: "999px", transition: "width 0.5s ease-out" }} />
+                <div style={{ height: "100%", width: `${(formsDone / TOTAL_FORMS) * 100}%`, background: "linear-gradient(to right,#9cc3e6,#8fd3b0)", borderRadius: "999px", transition: "width 0.5s ease-out" }} />
               </div>
             </div>
           )}
@@ -469,13 +667,16 @@ export default function PatientFormsPage() {
         <div style={{ maxWidth: "800px", margin: "0 auto", padding: "28px 16px" }}>
 
           {/* Global info */}
-          {stage === "info" && (
+          {stage === "info" && resumeOffer && (
+            <ResumeCard saved={resumeOffer} onContinue={resumeSaved} onFresh={discardSaved} />
+          )}
+          {stage === "info" && restored && !resumeOffer && (
             <GlobalInfoStep forms={FORMS} info={info} onChange={handleInfoChange} onNext={() => { setStage(0); window.scrollTo({ top: 0, behavior: "smooth" }); }} />
           )}
 
           {/* Transition banner */}
           {showTransition && transitionIdx !== null && (
-            <TransitionBanner completedIndex={transitionIdx} nextForm={transitionIdx + 1 < TOTAL_FORMS ? FORMS[transitionIdx + 1] : null} />
+            <TransitionBanner completedIndex={transitionIdx} nextForm={transitionIdx + 1 < TOTAL_FORMS ? FORMS[transitionIdx + 1] : null} onContinue={() => transitionAdvanceRef.current?.()} />
           )}
 
           {/* ── HIPAA + Intake ── */}
@@ -620,7 +821,7 @@ export default function PatientFormsPage() {
             if (blobsRef.current[formId]) return null; // already got blob
             return (
               <SilentMapper
-                key={formId}
+                key={`${formId}-${mapperKeys[formId] || 0}`}
                 formId={formId}
                 answers={answers}
                 info={info}
@@ -630,80 +831,108 @@ export default function PatientFormsPage() {
           })}
 
           {/* ── Final screen ── */}
-          {stage === "done" && !showTransition && (
+          {stage === "done" && !showTransition && (() => {
+            const readyIds   = FORMS.map(f => f.id).filter(id => blobsRef.current[id]);
+            const pendingIds = FORMS.map(f => f.id).filter(id => !blobsRef.current[id] && !failedForms.includes(id));
+            const slow       = pendingIds.some(id => (pdfTriesRef.current[id] || 1) > 1);
+            const sent       = emailStatus === "sent";
+            const failedAll  = !sent && emailStatus !== "sending" && !pendingIds.length && !readyIds.length;
+            const showError  = emailStatus === "error" || failedAll;
+            const font = "'Source Sans 3', sans-serif";
+            const patientEmail = info.email?.trim() || cancellationAnswers.email?.trim();
+            const statusIcon = (id) => blobsRef.current[id]
+              ? <svg width="13" height="13" fill="none" viewBox="0 0 24 24" stroke="#16a34a" strokeWidth={2.5}><path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7"/></svg>
+              : failedForms.includes(id) || showError
+                ? <span style={{ color: "#dc2626", fontWeight: 700, fontSize: "13px" }}>!</span>
+                : <div style={{ width: "11px", height: "11px", border: "2px solid #cbd5e1", borderTopColor: "#7d4f50", borderRadius: "50%", animation: "uSpin 0.8s linear infinite" }} />;
+
+            return (
             <div style={{ display: "flex", flexDirection: "column", alignItems: "center", textAlign: "center", padding: "40px 16px" }}>
-              <div style={{ width: "80px", height: "80px", borderRadius: "50%", backgroundColor: "#7d4f50", display: "flex", alignItems: "center", justifyContent: "center", marginBottom: "20px", boxShadow: "0 8px 24px rgba(125,79,80,0.3)" }}>
-                <svg width="36" height="36" fill="none" viewBox="0 0 24 24" stroke="white" strokeWidth={2.5}>
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
-                </svg>
+              <div style={{ width: "80px", height: "80px", borderRadius: "50%", backgroundColor: showError ? "#dc2626" : "#7d4f50", display: "flex", alignItems: "center", justifyContent: "center", marginBottom: "20px", boxShadow: "0 8px 24px rgba(125,79,80,0.3)" }}>
+                {sent || !showError
+                  ? <svg width="36" height="36" fill="none" viewBox="0 0 24 24" stroke="white" strokeWidth={2.5}><path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" /></svg>
+                  : <span style={{ color: "white", fontSize: "38px", fontWeight: 700, lineHeight: 1 }}>!</span>}
               </div>
-              <h1 style={{ fontSize: "28px", fontWeight: 700, color: "#0f172a", fontFamily: "'Lora', serif", marginBottom: "8px" }}>All Forms Complete!</h1>
-              <p style={{ fontSize: "15px", color: "#64748b", maxWidth: "400px", lineHeight: 1.6, marginBottom: "6px", fontFamily: "'Source Sans 3', sans-serif" }}>
-                Thank you, <strong style={{ color: "#1e293b" }}>{info.fullName}</strong>. All {TOTAL_FORMS} forms have been submitted to Cambridge Psychiatry.
+
+              <h1 style={{ fontSize: "28px", fontWeight: 700, color: "#0f172a", fontFamily: "'Lora', serif", marginBottom: "8px" }}>
+                {sent ? "Forms Submitted!" : showError ? "Your forms weren't sent yet" : "Almost done…"}
+              </h1>
+              <p style={{ fontSize: "15px", color: "#4b5563", maxWidth: "420px", lineHeight: 1.6, marginBottom: "6px", fontFamily: font }}>
+                {sent
+                  ? <>Thank you, <strong style={{ color: "#1e293b" }}>{info.fullName}</strong>. {sentMissing.length ? `${TOTAL_FORMS - sentMissing.length} of ${TOTAL_FORMS}` : `All ${TOTAL_FORMS}`} forms have been sent to Cambridge Psychiatry.</>
+                  : showError
+                    ? <>This is usually a connection problem. Check your internet connection and tap <strong>Try again</strong>. Your answers are saved on this device, so nothing needs to be re-entered.</>
+                    : <>Please keep this page open while we prepare and send your forms ({readyIds.length} of {TOTAL_FORMS} ready).{slow && <><br /><span style={{ color: "#b45309" }}>Your connection seems slow — still trying…</span></>}</>}
               </p>
-              <p style={{ fontSize: "13px", color: "#94a3b8", marginBottom: "28px", fontFamily: "'Source Sans 3', sans-serif" }}>
-                Can't find the email? Please check your spam or junk folder.
-              </p>
+              {sent && sentMissing.length > 0 && (
+                <p style={{ fontSize: "13px", color: "#b45309", maxWidth: "420px", marginBottom: "6px", fontFamily: font }}>
+                  We couldn&apos;t prepare: {sentMissing.join(", ")}. Our office has been notified and may ask you to complete {sentMissing.length > 1 ? "them" : "it"} at your visit.
+                </p>
+              )}
+              {sent && (
+                <p style={{ fontSize: "13px", color: "#5b6475", marginBottom: "28px", fontFamily: font }}>
+                  Can&apos;t find the email? Please check your spam or junk folder.
+                </p>
+              )}
+              {!sent && <div style={{ height: "22px" }} />}
 
               <div style={{ display: "flex", gap: "8px", flexWrap: "wrap", justifyContent: "center", marginBottom: "32px", maxWidth: "500px" }}>
                 {FORMS.map(f => (
                   <div key={f.id} style={{ display: "flex", alignItems: "center", gap: "6px", padding: "8px 14px", borderRadius: "10px", backgroundColor: "white", border: "1px solid #e2e8f0" }}>
                     <span style={{ fontSize: "14px" }}>{f.icon}</span>
-                    <span style={{ fontSize: "12px", fontWeight: 600, color: "#1e293b", fontFamily: "'Source Sans 3', sans-serif" }}>{f.label}</span>
-                    <svg width="13" height="13" fill="none" viewBox="0 0 24 24" stroke="#16a34a" strokeWidth={2.5}><path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7"/></svg>
+                    <span style={{ fontSize: "13px", fontWeight: 600, color: "#1e293b", fontFamily: font }}>{f.label}</span>
+                    {statusIcon(f.id)}
                   </div>
                 ))}
               </div>
 
               <div style={{ display: "flex", flexDirection: "column", gap: "12px", width: "100%", maxWidth: "320px" }}>
-                {mergedUrl ? (
+                {showError && (
+                  <button
+                    onClick={retryAll}
+                    style={{ width: "100%", padding: "16px", borderRadius: "12px", fontSize: "16px", fontWeight: 700, border: "none", color: "white", backgroundColor: "#7d4f50", cursor: "pointer", fontFamily: font }}
+                  >
+                    Try again
+                  </button>
+                )}
+
+                {emailStatus === "sending" && (
+                  <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: "8px", fontSize: "14px", color: "#4b5563", fontFamily: font }}>
+                    <div style={{ width: "14px", height: "14px", border: "2px solid #cbd5e1", borderTopColor: "#7d4f50", borderRadius: "50%", animation: "uSpin 0.8s linear infinite" }} />
+                    Sending forms to our office…
+                  </div>
+                )}
+                {sent && (
+                  <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: "6px", fontSize: "13px", color: "#16a34a", fontFamily: font }}>
+                    <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}><path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7"/></svg>
+                    {patientEmail ? `Emailed to ${patientEmail} and our office` : "Emailed to our office"}
+                  </div>
+                )}
+
+                {mergedUrl && (
                   <button
                     onClick={handleDownload}
-                    style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: "8px", width: "100%", padding: "14px", borderRadius: "12px", fontSize: "15px", fontWeight: 700, border: "none", color: "white", backgroundColor: "#7d4f50", cursor: "pointer", fontFamily: "'Source Sans 3', sans-serif" }}
-                    onMouseEnter={e => e.currentTarget.style.backgroundColor = "#6a4142"}
-                    onMouseLeave={e => e.currentTarget.style.backgroundColor = "#7d4f50"}
+                    style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: "8px", width: "100%", padding: "14px", borderRadius: "12px", fontSize: "15px", fontWeight: 700, border: sent ? "none" : "2px solid #7d4f50", color: sent ? "white" : "#7d4f50", backgroundColor: sent ? "#7d4f50" : "white", cursor: "pointer", fontFamily: font }}
                   >
                     <svg width="18" height="18" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
                     </svg>
-                    Download All Forms (PDF)
+                    Download a copy (PDF)
                   </button>
-                ) : (
-                  <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: "8px", width: "100%", padding: "14px", borderRadius: "12px", fontSize: "15px", fontWeight: 700, color: "rgba(255,255,255,0.8)", backgroundColor: "#7d4f50", opacity: 0.6, fontFamily: "'Source Sans 3', sans-serif" }}>
-                    <div style={{ width: "16px", height: "16px", border: "2px solid rgba(255,255,255,0.4)", borderTopColor: "white", borderRadius: "50%", animation: "uSpin 0.8s linear infinite" }} />
-                    Preparing PDF…
-                  </div>
                 )}
 
-                {emailStatus === "sending" && (
-                  <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: "8px", fontSize: "13px", color: "#64748b", fontFamily: "'Source Sans 3', sans-serif" }}>
-                    <div style={{ width: "12px", height: "12px", border: "2px solid #cbd5e1", borderTopColor: "#7d4f50", borderRadius: "50%", animation: "uSpin 0.8s linear infinite" }} />
-                    Sending forms to our office…
-                  </div>
+                {sent && (
+                  <button
+                    onClick={handleReset}
+                    style={{ width: "100%", padding: "14px", borderRadius: "12px", fontSize: "14px", fontWeight: 600, border: "2px solid #e2e8f0", color: "#475569", backgroundColor: "white", cursor: "pointer", fontFamily: font }}
+                  >
+                    Start Over
+                  </button>
                 )}
-                {emailStatus === "sent" && (
-                  <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: "6px", fontSize: "13px", color: "#16a34a", fontFamily: "'Source Sans 3', sans-serif" }}>
-                    <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}><path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7"/></svg>
-                    {(info.email?.trim() || cancellationAnswers.email?.trim()) ? `Emailed to ${info.email?.trim() || cancellationAnswers.email.trim()} and our office` : "Emailed to our office"}
-                  </div>
-                )}
-                {emailStatus === "error" && (
-                  <p style={{ fontSize: "13px", color: "#dc2626", fontFamily: "'Source Sans 3', sans-serif" }}>
-                    Email delivery failed — please download the PDF above.
-                  </p>
-                )}
-
-                <button
-                  onClick={handleReset}
-                  style={{ width: "100%", padding: "14px", borderRadius: "12px", fontSize: "14px", fontWeight: 600, border: "2px solid #e2e8f0", color: "#475569", backgroundColor: "white", cursor: "pointer", fontFamily: "'Source Sans 3', sans-serif" }}
-                  onMouseEnter={e => e.currentTarget.style.backgroundColor = "#f8fafc"}
-                  onMouseLeave={e => e.currentTarget.style.backgroundColor = "white"}
-                >
-                  Start Over
-                </button>
               </div>
             </div>
-          )}
+            );
+          })()}
         </div>
       </div>
       <style>{`@keyframes uSpin { to { transform: rotate(360deg) } }`}</style>

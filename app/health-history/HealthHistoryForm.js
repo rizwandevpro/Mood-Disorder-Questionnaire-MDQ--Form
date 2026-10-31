@@ -2,6 +2,7 @@
 
 import { useState, useRef, useEffect, useCallback } from "react";
 import { HH_STEPS } from "./healthHistorySteps";
+import { digitsOnly, rangeError, yearError, oneOfLetters } from "../utils/validators";
 
 const BRAND        = "#7d4f50";
 const BRAND_LIGHT  = "rgba(125,79,80,0.07)";
@@ -58,7 +59,7 @@ const HH_CSS = `
   /* ── Dynamic table: scrollable on mobile ── */
   .hh-table-wrap               { border-radius:12px; border:1px solid #e2e8f0; overflow-x:auto; }
   .hh-table                    { width:100%; border-collapse:collapse; font-size:13px; }
-  .hh-table th                 { text-align:left; padding:10px 12px; font-size:11px; font-weight:700; text-transform:uppercase; letter-spacing:0.05em; color:#475569; background:#f8fafc; border-bottom:1px solid #e2e8f0; white-space:nowrap; }
+  .hh-table th                 { text-align:left; padding:10px 12px; font-size:13px; font-weight:700; text-transform:uppercase; letter-spacing:0.05em; color:#475569; background:#f8fafc; border-bottom:1px solid #e2e8f0; white-space:nowrap; }
   .hh-table td                 { padding:8px; border-bottom:1px solid #f1f5f9; vertical-align:middle; }
   .hh-table tr:last-child td   { border-bottom:none; }
   .hh-table input              { width:100%; box-sizing:border-box; border:2px solid #e2e8f0; border-radius:8px; padding:8px 10px; font-size:13px; font-weight:500; color:#1e293b; background:white; outline:none; font-family:"Source Sans 3", sans-serif; transition:border-color 0.15s; min-width:60px; }
@@ -103,9 +104,9 @@ function inputStyle(err, focused) {
 
 function labelStyle(err) {
   return {
-    display:"block", fontSize:"10px", fontWeight:700,
+    display:"block", fontSize:"12px", fontWeight:700,
     textTransform:"uppercase", letterSpacing:"0.1em",
-    marginBottom:"6px", color: err?"#dc2626":"#94a3b8",
+    marginBottom:"6px", color: err?"#dc2626":"#5b6475",
     fontFamily:"'Source Sans 3', sans-serif",
   };
 }
@@ -131,7 +132,7 @@ function FieldInput({ f, answers, onChange, error }) {
       <label style={labelStyle(error)}>
         {f.label}
         {f.required && <span style={{color:BRAND}}> *</span>}
-        {f.required === false && <span style={{textTransform:"none",letterSpacing:"normal",fontWeight:400,color:"#cbd5e1"}}> (optional)</span>}
+        {f.required === false && <span style={{textTransform:"none",letterSpacing:"normal",fontWeight:400,color:"#6b7280"}}> (optional)</span>}
       </label>
       {f.type === "select" ? (
         <select value={val} onChange={e=>onChange(f.key,e.target.value)}
@@ -145,12 +146,14 @@ function FieldInput({ f, answers, onChange, error }) {
           onFocus={()=>setFocused(true)} onBlur={()=>setFocused(false)}
           style={{...iStyle, resize:"vertical"}} />
       ) : (
-        <input type={f.type} value={val} onChange={e=>onChange(f.key,e.target.value)}
+        <input type={f.type} value={val}
+          onChange={e=>onChange(f.key, f.numeric ? digitsOnly(e.target.value, f.numeric.maxLen) : e.target.value)}
+          inputMode={f.numeric ? "numeric" : undefined} maxLength={f.numeric?.maxLen}
           placeholder={f.placeholder}
           onFocus={()=>setFocused(true)} onBlur={()=>setFocused(false)}
           style={iStyle} />
       )}
-      {error && <p style={{marginTop:"4px",fontSize:"12px",color:"#ef4444",fontFamily:"'Source Sans 3', sans-serif"}}>⚠ {error}</p>}
+      {error && <p style={{marginTop:"4px",fontSize:"13px",color:"#ef4444",fontFamily:"'Source Sans 3', sans-serif"}}>⚠ {error}</p>}
     </div>
   );
 }
@@ -232,7 +235,7 @@ function StepConditions({ answers, onChange, errors }) {
             </svg>
           )}
         </div>
-        <span style={{fontSize:"12px",fontWeight:600,color:checked?BRAND:"#475569",fontFamily:"'Source Sans 3', sans-serif",lineHeight:1.3}}>{label}</span>
+        <span style={{fontSize:"13px",fontWeight:600,color:checked?BRAND:"#475569",fontFamily:"'Source Sans 3', sans-serif",lineHeight:1.3}}>{label}</span>
       </div>
     );
   };
@@ -249,7 +252,7 @@ function StepConditions({ answers, onChange, errors }) {
             {c==="Cancer" && answers[ckey(c)] && (
               <input type="text" value={answers.cancerType||""} onChange={e=>onChange("cancerType",e.target.value)}
                 placeholder="Cancer type…"
-                style={{marginTop:"6px",width:"100%",boxSizing:"border-box",border:"2px solid #e2e8f0",borderRadius:"8px",padding:"6px 10px",fontSize:"12px",fontWeight:500,fontFamily:"'Source Sans 3', sans-serif",outline:"none"}} />
+                style={{marginTop:"6px",width:"100%",boxSizing:"border-box",border:"2px solid #e2e8f0",borderRadius:"8px",padding:"6px 10px",fontSize:"13px",fontWeight:500,fontFamily:"'Source Sans 3', sans-serif",outline:"none"}} />
             )}
           </div>
         ))}
@@ -292,7 +295,7 @@ function StepAllergiesMeds({ answers, onChange, errors }) {
               <textarea value={answers.allergyList||""} onChange={e=>onChange("allergyList",e.target.value)}
                 placeholder="List all known allergies to medications or substances…" rows={3}
                 style={{...inputStyle(!!errors?.allergyList,false),resize:"vertical"}} />
-              {errors?.allergyList && <p style={{fontSize:"12px",color:"#dc2626",marginTop:"4px",fontFamily:"'Source Sans 3', sans-serif"}}>⚠ {errors.allergyList}</p>}
+              {errors?.allergyList && <p style={{fontSize:"13px",color:"#dc2626",marginTop:"4px",fontFamily:"'Source Sans 3', sans-serif"}}>⚠ {errors.allergyList}</p>}
             </div>
           )}
         </div>
@@ -300,20 +303,22 @@ function StepAllergiesMeds({ answers, onChange, errors }) {
       {divider()}
       <div>
         {sectionTitle("Medications *")}
-        <p style={{fontSize:"13px",color:"#94a3b8",marginBottom:"8px",fontFamily:"'Source Sans 3', sans-serif"}}>List all medications including dose and frequency.</p>
+        <p style={{fontSize:"13px",color:"#5b6475",marginBottom:"8px",fontFamily:"'Source Sans 3', sans-serif"}}>List all medications including dose and frequency.</p>
         <textarea value={answers.medications||""} onChange={e=>onChange("medications",e.target.value)}
           placeholder="Medication name — dose — frequency…" rows={5}
           style={{...inputStyle(!!errors?.medications,false),resize:"vertical"}} />
-        {errors?.medications && <p style={{fontSize:"12px",color:"#dc2626",marginTop:"4px",fontFamily:"'Source Sans 3', sans-serif"}}>⚠ {errors.medications}</p>}
+        {errors?.medications && <p style={{fontSize:"13px",color:"#dc2626",marginTop:"4px",fontFamily:"'Source Sans 3', sans-serif"}}>⚠ {errors.medications}</p>}
       </div>
     </div>
   );
 }
 // ── Habit helpers — defined OUTSIDE StepHealthHabits so React doesn't
 //    treat them as new component types on each render (which would steal focus)
-function SmallInput({ fieldKey, value, onChange, placeholder, width="100px" }) {
+function SmallInput({ fieldKey, value, onChange, placeholder, width="100px", numeric }) {
   return (
-    <input type="text" value={value||""} onChange={e=>onChange(fieldKey,e.target.value)} placeholder={placeholder}
+    <input type="text" value={value||""} placeholder={placeholder}
+      onChange={e=>onChange(fieldKey, numeric ? digitsOnly(e.target.value, numeric) : e.target.value)}
+      inputMode={numeric ? "numeric" : undefined} maxLength={numeric || undefined}
       style={{width,boxSizing:"border-box",border:"2px solid #e2e8f0",borderRadius:"8px",padding:"8px 10px",fontSize:"13px",fontWeight:500,color:"#1e293b",backgroundColor:"#f8fafc",outline:"none",fontFamily:"'Source Sans 3', sans-serif",transition:"border-color 0.15s",minWidth:"70px"}}
       onFocus={e=>e.target.style.borderColor="#3b82f6"} onBlur={e=>e.target.style.borderColor="#e2e8f0"} />
   );
@@ -325,7 +330,7 @@ function HabitSmallCheck({ label, checked, onToggle }) {
       <div style={{width:"14px",height:"14px",borderRadius:"3px",border:`2px solid ${checked?BRAND:"#cbd5e1"}`,backgroundColor:checked?BRAND:"white",display:"flex",alignItems:"center",justifyContent:"center",transition:"all 0.15s"}}>
         {checked && <svg width="9" height="9" fill="none" viewBox="0 0 12 12" stroke="white" strokeWidth={2.5}><path strokeLinecap="round" strokeLinejoin="round" d="M2 6l3 3 5-5"/></svg>}
       </div>
-      <span style={{fontSize:"12px",fontWeight:600,color:checked?BRAND:"#374151",fontFamily:"'Source Sans 3', sans-serif",whiteSpace:"nowrap"}}>{label}</span>
+      <span style={{fontSize:"13px",fontWeight:600,color:checked?BRAND:"#374151",fontFamily:"'Source Sans 3', sans-serif",whiteSpace:"nowrap"}}>{label}</span>
     </div>
   );
 }
@@ -342,8 +347,8 @@ function HabitRow({ label, children }) {
 }
 
 function StepHealthHabits({ answers, onChange, errors }) {
-  const note = t => <span style={{fontSize:"12px",color:"#94a3b8",fontFamily:"'Source Sans 3', sans-serif",whiteSpace:"nowrap"}}>{t}</span>;
-  const errNote = key => errors?.[key] && <span style={{fontSize:"11px",color:"#dc2626",fontWeight:600,fontFamily:"'Source Sans 3', sans-serif",whiteSpace:"nowrap"}}>⚠ {errors[key]}</span>;
+  const note = t => <span style={{fontSize:"13px",color:"#5b6475",fontFamily:"'Source Sans 3', sans-serif",whiteSpace:"nowrap"}}>{t}</span>;
+  const errNote = key => errors?.[key] && <span style={{fontSize:"13px",color:"#dc2626",fontWeight:600,fontFamily:"'Source Sans 3', sans-serif",whiteSpace:"nowrap"}}>⚠ {errors[key]}</span>;
   const habitLabel = (text, key) => (
     <span style={{fontSize:"14px",fontWeight:700,color: errors?.[key] ? "#dc2626" : "#374151",fontFamily:"'Source Sans 3', sans-serif"}}>
       {text}<span style={{color:BRAND}}> *</span>
@@ -355,7 +360,7 @@ function StepHealthHabits({ answers, onChange, errors }) {
       <HabitRow label={habitLabel("Caffeine","habCaffeine")}>
         <HabitSmallCheck label="Uses" checked={!!answers.habCaffeineUse} onToggle={()=>onChange("habCaffeineUse",!answers.habCaffeineUse)} />
         <HabitSmallCheck label="None"  checked={!!answers.habCaffeineNone} onToggle={()=>{onChange("habCaffeineNone",!answers.habCaffeineNone);if(!answers.habCaffeineNone)onChange("habCaffeineUse",false);}} />
-        <SmallInput fieldKey="habCaffeineDrinks" value={answers.habCaffeineDrinks} onChange={onChange} placeholder="Amount" />
+        <SmallInput fieldKey="habCaffeineDrinks" value={answers.habCaffeineDrinks} onChange={onChange} placeholder="Amount" numeric={3} />
         {note("drinks per")}
         <SmallInput fieldKey="habCaffeinePer" value={answers.habCaffeinePer} onChange={onChange} placeholder="Day/week" />
         {errNote("habCaffeine")}
@@ -363,7 +368,7 @@ function StepHealthHabits({ answers, onChange, errors }) {
       <HabitRow label={habitLabel("Tobacco","habTobacco")}>
         <HabitSmallCheck label="Uses" checked={!!answers.habTobaccoUse} onToggle={()=>onChange("habTobaccoUse",!answers.habTobaccoUse)} />
         <HabitSmallCheck label="None" checked={!!answers.habTobaccoNone} onToggle={()=>{onChange("habTobaccoNone",!answers.habTobaccoNone);if(!answers.habTobaccoNone)onChange("habTobaccoUse",false);}} />
-        <SmallInput fieldKey="habTobaccoCigs" value={answers.habTobaccoCigs} onChange={onChange} placeholder="Amount" />
+        <SmallInput fieldKey="habTobaccoCigs" value={answers.habTobaccoCigs} onChange={onChange} placeholder="Amount" numeric={3} />
         {note("cigs/day")}
         <HabitSmallCheck label="Quit?" checked={!!answers.habTobaccoQuit} onToggle={()=>onChange("habTobaccoQuit",!answers.habTobaccoQuit)} />
         {answers.habTobaccoQuit && <SmallInput fieldKey="habTobaccoQuitDate" value={answers.habTobaccoQuitDate} onChange={onChange} placeholder="Around when?" width="130px" />}
@@ -372,7 +377,7 @@ function StepHealthHabits({ answers, onChange, errors }) {
       <HabitRow label={habitLabel("Alcohol","habAlcohol")}>
         <HabitSmallCheck label="Uses" checked={!!answers.habAlcoholUse} onToggle={()=>onChange("habAlcoholUse",!answers.habAlcoholUse)} />
         <HabitSmallCheck label="None" checked={!!answers.habAlcoholNone} onToggle={()=>{onChange("habAlcoholNone",!answers.habAlcoholNone);if(!answers.habAlcoholNone)onChange("habAlcoholUse",false);}} />
-        <SmallInput fieldKey="habAlcoholDrinks" value={answers.habAlcoholDrinks} onChange={onChange} placeholder="Amount" />
+        <SmallInput fieldKey="habAlcoholDrinks" value={answers.habAlcoholDrinks} onChange={onChange} placeholder="Amount" numeric={3} />
         {note("drinks per")}
         <SmallInput fieldKey="habAlcoholPer" value={answers.habAlcoholPer} onChange={onChange} placeholder="Day/week" />
         {errNote("habAlcohol")}
@@ -420,7 +425,7 @@ function DynamicTable({ title, columns, rows, setRows, maxRows, rowTemplate }) {
         {sectionTitle(title)}
         {rows.length < maxRows && (
           <button type="button" onClick={()=>setRows([...rows,{...rowTemplate}])}
-            style={{display:"flex",alignItems:"center",gap:"4px",padding:"6px 14px",borderRadius:"8px",fontSize:"12px",fontWeight:600,border:`2px solid ${BRAND}`,color:BRAND,backgroundColor:"white",cursor:"pointer",fontFamily:"'Source Sans 3', sans-serif",flexShrink:0}}>
+            style={{display:"flex",alignItems:"center",gap:"4px",padding:"6px 14px",borderRadius:"8px",fontSize:"13px",fontWeight:600,border:`2px solid ${BRAND}`,color:BRAND,backgroundColor:"white",cursor:"pointer",fontFamily:"'Source Sans 3', sans-serif",flexShrink:0}}>
             + Add Row
           </button>
         )}
@@ -435,13 +440,16 @@ function DynamicTable({ title, columns, rows, setRows, maxRows, rowTemplate }) {
               <tr key={i}>
                 {columns.map(c=>(
                   <td key={c.key}>
-                    <input value={row[c.key]||""} onChange={e=>{const nr=[...rows];nr[i]={...nr[i],[c.key]:e.target.value};setRows(nr);}} placeholder={c.placeholder||""} />
+                    <input value={row[c.key]||""} placeholder={c.placeholder||""}
+                      inputMode={c.year ? "numeric" : undefined} maxLength={c.year ? 4 : c.letters ? 1 : undefined}
+                      onChange={e=>{const v=c.year ? digitsOnly(e.target.value,4) : c.letters ? oneOfLetters(e.target.value,c.letters) : e.target.value;
+                        const nr=[...rows];nr[i]={...nr[i],[c.key]:v};setRows(nr);}} />
                   </td>
                 ))}
                 <td style={{textAlign:"center"}}>
                   {rows.length>1 && (
                     <button type="button" onClick={()=>setRows(rows.filter((_,ri)=>ri!==i))}
-                      style={{background:"none",border:"none",cursor:"pointer",fontSize:"18px",color:"#cbd5e1",lineHeight:1}}
+                      style={{background:"none",border:"none",cursor:"pointer",fontSize:"18px",color:"#6b7280",lineHeight:1}}
                       onMouseEnter={e=>e.currentTarget.style.color="#f87171"}
                       onMouseLeave={e=>e.currentTarget.style.color="#cbd5e1"}>×</button>
                   )}
@@ -463,7 +471,7 @@ function StepSurgicalHistory({ answers, onChange }) {
     <DynamicTable title="Surgical History" maxRows={8} rows={rows} setRows={setRows}
       rowTemplate={{year:"",hospital:"",surgery:""}}
       columns={[
-        {key:"year",    label:"Year",                   width:"80px", placeholder:"Year"},
+        {key:"year",    label:"Year",                   width:"80px", placeholder:"Year", year:true},
         {key:"hospital",label:"Hospital / City / State",width:"35%",  placeholder:"Hospital, city, state"},
         {key:"surgery", label:"Type of Surgery / Complications",       placeholder:"Type and any complications"},
       ]} />
@@ -484,7 +492,8 @@ function StepPregnancyOther({ answers, onChange, errors }) {
         {[["pregNum","# Pregnancies"],["pregLiving","# Living Children"],["pregDeliveries","# Deliveries / C-sections"],["pregVaginal","# Vaginal"]].map(([k,l])=>(
           <div key={k}>
             <label style={labelStyle(false)}>{l}</label>
-            <input type="text" value={answers[k]||""} onChange={e=>onChange(k,e.target.value)} placeholder="0"
+            <input type="text" value={answers[k]||""} onChange={e=>onChange(k,digitsOnly(e.target.value,2))} placeholder="0"
+              inputMode="numeric" maxLength={2}
               style={inputStyle(false,false)} />
           </div>
         ))}
@@ -492,8 +501,8 @@ function StepPregnancyOther({ answers, onChange, errors }) {
       <DynamicTable title="Children" maxRows={6} rows={childRows} setRows={setChildRows}
         rowTemplate={{birthYear:"",mf:"",complications:""}}
         columns={[
-          {key:"birthYear",    label:"Birth Year",       width:"100px",placeholder:"Year"},
-          {key:"mf",           label:"M / F",            width:"70px", placeholder:"M/F"},
+          {key:"birthYear",    label:"Birth Year",       width:"100px",placeholder:"Year", year:true},
+          {key:"mf",           label:"M / F",            width:"70px", placeholder:"M/F", letters:"MF"},
           {key:"complications",label:"Complications, if any",          placeholder:"None"},
         ]} />
       {divider()}
@@ -501,7 +510,7 @@ function StepPregnancyOther({ answers, onChange, errors }) {
         rows={hospRows} setRows={setHospRows}
         rowTemplate={{year:"",hospital:"",reason:""}}
         columns={[
-          {key:"year",    label:"Year",                   width:"80px",placeholder:"Year"},
+          {key:"year",    label:"Year",                   width:"80px",placeholder:"Year", year:true},
           {key:"hospital",label:"Hospital / City / State",width:"35%", placeholder:"Hospital, city, state"},
           {key:"reason",  label:"Reason / Nature of Illness",          placeholder:"Reason for hospitalization"},
         ]} />
@@ -522,7 +531,7 @@ function StepPregnancyOther({ answers, onChange, errors }) {
             placeholder="Date(s)"
             style={{border:"2px solid #e2e8f0",borderRadius:"8px",padding:"8px 12px",fontSize:"13px",fontWeight:500,width:"160px",fontFamily:"'Source Sans 3', sans-serif",outline:"none"}} />
         )}
-        {errors?.bloodTransfusion && <span style={{fontSize:"12px",color:"#dc2626",fontWeight:600,fontFamily:"'Source Sans 3', sans-serif"}}>⚠ {errors.bloodTransfusion}</span>}
+        {errors?.bloodTransfusion && <span style={{fontSize:"13px",color:"#dc2626",fontWeight:600,fontFamily:"'Source Sans 3', sans-serif"}}>⚠ {errors.bloodTransfusion}</span>}
       </div>
     </div>
   );
@@ -565,7 +574,9 @@ function StepFamilyHistory({ answers, onChange, errors }) {
                   <td><span style={{fontSize:"13px",fontWeight:600,color:"#475569",fontFamily:"'Source Sans 3', sans-serif",whiteSpace:"nowrap"}}>{m.label}</span></td>
                   {["AgeLiving","AgeDeath","Conditions"].map(f=>(
                     <td key={f}>
-                      <input value={answers[`fam_${m.key}_${f}`]||""} onChange={e=>onChange(`fam_${m.key}_${f}`,e.target.value)}
+                      <input value={answers[`fam_${m.key}_${f}`]||""}
+                        onChange={e=>onChange(`fam_${m.key}_${f}`, f==="Conditions" ? e.target.value : digitsOnly(e.target.value,3))}
+                        inputMode={f==="Conditions" ? undefined : "numeric"} maxLength={f==="Conditions" ? undefined : 3}
                         placeholder={f==="Conditions"?"Conditions…":"Age"} />
                     </td>
                   ))}
@@ -579,7 +590,7 @@ function StepFamilyHistory({ answers, onChange, errors }) {
       {/* Disease checkboxes */}
       <div>
         {sectionTitle("Blood Relative Diseases")}
-        <p style={{fontSize:"13px",color:"#94a3b8",marginBottom:"12px",fontFamily:"'Source Sans 3', sans-serif"}}>Check if a blood relative has any of the below, and note their relationship to you.</p>
+        <p style={{fontSize:"13px",color:"#5b6475",marginBottom:"12px",fontFamily:"'Source Sans 3', sans-serif"}}>Check if a blood relative has any of the below, and note their relationship to you.</p>
         <div className="hh-table-wrap">
           <table className="hh-table">
             <thead>
@@ -636,7 +647,7 @@ function SignaturePad({ value, onChange, error }) {
   const endDraw=()=>{if(!drawing.current)return;drawing.current=false;onChange(canvasRef.current.toDataURL());};
   const clearSig=()=>{canvasRef.current.getContext("2d").clearRect(0,0,canvasRef.current.width,canvasRef.current.height);setIsEmpty(true);onChange(null);};
 
-  const btnS=active=>({padding:"6px 16px",borderRadius:"8px",fontSize:"12px",fontWeight:600,cursor:"pointer",border:`2px solid ${active?BRAND:"#e2e8f0"}`,backgroundColor:active?BRAND:"white",color:active?"white":"#64748b",fontFamily:"'Source Sans 3', sans-serif"});
+  const btnS=active=>({padding:"6px 16px",borderRadius:"8px",fontSize:"13px",fontWeight:600,cursor:"pointer",border:`2px solid ${active?BRAND:"#e2e8f0"}`,backgroundColor:active?BRAND:"white",color:active?"white":"#4b5563",fontFamily:"'Source Sans 3', sans-serif"});
 
   return (
     <div>
@@ -652,7 +663,7 @@ function SignaturePad({ value, onChange, error }) {
         {mode==="upload" && (
           <div onClick={()=>fileRef.current?.click()}
             style={{height:"120px",display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",gap:"8px",cursor:"pointer"}}>
-            <p style={{fontSize:"14px",color:"#94a3b8",fontFamily:"'Source Sans 3', sans-serif"}}>Click to upload signature image</p>
+            <p style={{fontSize:"14px",color:"#5b6475",fontFamily:"'Source Sans 3', sans-serif"}}>Click to upload signature image</p>
             <input ref={fileRef} type="file" accept="image/*" style={{display:"none"}} onChange={e=>{
               const file=e.target.files?.[0];if(!file)return;
               const reader=new FileReader();
@@ -663,14 +674,14 @@ function SignaturePad({ value, onChange, error }) {
         )}
         {isEmpty&&mode==="draw"&&(
           <div style={{position:"absolute",inset:0,display:"flex",alignItems:"center",justifyContent:"center",pointerEvents:"none"}}>
-            <p style={{color:"#e2e8f0",fontSize:"18px",fontFamily:"'Lora', serif"}}>Sign here</p>
+            <p style={{color:"#9aa3b2",fontSize:"18px",fontFamily:"'Lora', serif"}}>Sign here</p>
           </div>
         )}
       </div>
       <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginTop:"8px"}}>
-        {error?<p style={{fontSize:"12px",color:"#ef4444",fontFamily:"'Source Sans 3', sans-serif"}}>⚠ {error}</p>
-              :<p style={{fontSize:"12px",color:"#94a3b8",fontFamily:"'Source Sans 3', sans-serif"}}>{mode==="draw"?"Draw your signature above":"Upload a signature image"}</p>}
-        {!isEmpty&&<button type="button" onClick={clearSig} style={{fontSize:"12px",color:"#f87171",fontWeight:600,cursor:"pointer",background:"none",border:"none",fontFamily:"'Source Sans 3', sans-serif"}}>Clear</button>}
+        {error?<p style={{fontSize:"13px",color:"#ef4444",fontFamily:"'Source Sans 3', sans-serif"}}>⚠ {error}</p>
+              :<p style={{fontSize:"13px",color:"#5b6475",fontFamily:"'Source Sans 3', sans-serif"}}>{mode==="draw"?"Draw your signature above":"Upload a signature image"}</p>}
+        {!isEmpty&&<button type="button" onClick={clearSig} style={{fontSize:"13px",color:"#f87171",fontWeight:600,cursor:"pointer",background:"none",border:"none",fontFamily:"'Source Sans 3', sans-serif"}}>Clear</button>}
       </div>
     </div>
   );
@@ -680,7 +691,7 @@ function StepAdditional({ answers, onChange, errors }) {
   return (
     <div style={{display:"flex",flexDirection:"column",gap:"24px"}}>
       <div>
-        <label style={labelStyle(false)}>Additional Information <span style={{textTransform:"none",letterSpacing:"normal",fontWeight:400,color:"#cbd5e1"}}>(optional)</span></label>
+        <label style={labelStyle(false)}>Additional Information <span style={{textTransform:"none",letterSpacing:"normal",fontWeight:400,color:"#6b7280"}}>(optional)</span></label>
         <textarea value={answers.additionalInfo||""} onChange={e=>onChange("additionalInfo",e.target.value)}
           placeholder="What else do you think your doctor should know about your health?" rows={5}
           style={{...inputStyle(false,false),resize:"vertical"}} />
@@ -689,7 +700,7 @@ function StepAdditional({ answers, onChange, errors }) {
         <p style={{fontSize:"15px",fontWeight:700,color:"#1e293b",marginBottom:"6px",fontFamily:"'Lora', serif"}}>
           Patient Signature <span style={{color:BRAND}}>*</span>
         </p>
-        <p style={{fontSize:"13px",color:"#94a3b8",marginBottom:"12px",fontFamily:"'Source Sans 3', sans-serif"}}>
+        <p style={{fontSize:"13px",color:"#5b6475",marginBottom:"12px",fontFamily:"'Source Sans 3', sans-serif"}}>
           I certify that the information on this form is correct to the best of my knowledge.
         </p>
         <SignaturePad value={answers.hhSignature} onChange={v=>onChange("hhSignature",v)} error={errors?.hhSignature} />
@@ -704,7 +715,16 @@ function StepAdditional({ answers, onChange, errors }) {
 // ── Validation ────────────────────────────────────────────────────────────────
 function validateHHStep(step, answers) {
   const errors = {};
-  if (step.type==="fields") step.fields?.forEach(f=>{if(f.required&&!(answers[f.key]||"").toString().trim())errors[f.key]="Required";});
+  if (step.type==="fields") step.fields?.forEach(f=>{
+    if (f.required&&!(answers[f.key]||"").toString().trim()) { errors[f.key]="Required"; return; }
+    if (f.numeric) { const e=rangeError(answers[f.key], f.numeric.min, f.numeric.max, f.numeric.label); if (e) errors[f.key]=e; }
+  });
+  const badYear = (rows, key) => (Array.isArray(rows)?rows:[]).map(r=>yearError(r?.[key])).find(Boolean);
+
+  if (step.type==="surgicalHistory") {
+    const e = badYear(answers.surgicalRows, "year");
+    if (e) errors._step = `Surgical history: ${e}`;
+  }
 
   if (step.type==="additional") {
     if (!answers.hhSignature) errors.hhSignature="Please provide your signature";
@@ -734,11 +754,15 @@ function validateHHStep(step, answers) {
 
   if (step.type==="pregnancyOther") {
     if (!answers.bloodTransfusion) errors.bloodTransfusion = "Required";
+    const e = badYear(answers.pregnancyChildRows, "birthYear") || badYear(answers.otherHospRows, "year");
+    if (e) errors._step = e;
   }
 
   if (step.type==="familyHistory") {
     const anyFamInfo = Object.keys(answers).some(k=>(k.startsWith("fam_")||k.startsWith("famDis_")) && answers[k] && answers[k].toString().trim());
     if (!anyFamInfo) errors._step = "Please fill in at least one family member's information, or check at least one disease below.";
+    const badAge = Object.keys(answers).filter(k=>/^fam_.*_Age(Living|Death)$/.test(k)).map(k=>rangeError(answers[k],0,120,"age")).find(Boolean);
+    if (badAge) errors._step = `Family history: ${badAge}`;
   }
 
   return errors;
@@ -770,7 +794,7 @@ function Card({ step, answers, onChange, onNext, onBack, isFirst, isLast }) {
     <div style={{backgroundColor:"white",borderRadius:"24px",boxShadow:"0 4px 24px rgba(0,0,0,0.08)",border:"1px solid #f1f5f9",overflow:"hidden"}}>
       <div style={{padding:"28px 32px 20px",borderBottom:"1px solid #f1f5f9"}}>
         <h2 style={{fontSize:"22px",fontWeight:700,color:"#0f172a",marginBottom:"4px",fontFamily:"'Lora', Georgia, serif"}}>{step.title}</h2>
-        <p  style={{fontSize:"14px",color:"#64748b",lineHeight:1.5,fontFamily:"'Source Sans 3', sans-serif"}}>{step.subtitle}</p>
+        <p  style={{fontSize:"14px",color:"#4b5563",lineHeight:1.5,fontFamily:"'Source Sans 3', sans-serif"}}>{step.subtitle}</p>
       </div>
       <div style={{padding:"28px 32px"}}>
         {errors._step && (
